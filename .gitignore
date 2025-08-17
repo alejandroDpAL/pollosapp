@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Logs
+logs
+*.log
+*.log.*
+
+# Build outputs
+dist/
+build/
+
+# React Native / Expo
+.expo/
+.expo-shared/
+android/
+ios/
+
+# VSCode
+.vscode/
+.history/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno
+.env
+*.env
