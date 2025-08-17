@@ -1,4 +1,4 @@
-import { pool } from "../database/conexion";
+import { pool } from "../database/conexion.js";
 
 
 export const Get_costos = async (req, res) => {

@@ -2,27 +2,11 @@ import { pool } from "../database/conexion.js";
 
 export const listarProductos = async (req, res) => {
   try {
-    const sql = `
-      SELECT 
-        id_producto,
-        nombre_producto,
-        cantidad_producto,
-        FORMAT(costo, 0) AS costo,  -- sigue siendo string con comas
-        DATE_FORMAT(fecha_compra, '%Y-%m-%d') AS fecha_compra,
-        DATE_FORMAT(fecha_venta, '%Y-%m-%d') AS fecha_venta
-      FROM productos
-    `;
+    const sql = `SELECT * FROM productos`;
+    const [rows] = await pool.query(sql);
 
-    const [result] = await pool.query(sql);
-
-    // ✅ Procesar los datos para eliminar comas de "costo" y convertir a número
-    const productosFormateados = result.map(producto => ({
-      ...producto,
-      costo: parseInt(producto.costo.replace(/,/g, ""), 10)
-    }));
-
-    if (productosFormateados.length > 0) {
-      res.status(200).json(productosFormateados);
+    if (rows.length > 0) {
+      res.status(200).json(rows);
     } else {
       res.status(404).json({
         message: "No se encontraron productos disponibles",
@@ -117,4 +101,6 @@ export const EliminarProductos = async (req, res) => {
     });
   }
 };
+
+
 

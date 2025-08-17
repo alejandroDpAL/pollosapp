@@ -1,9 +1,9 @@
-import { pool } from "../database/conexion";
+import { pool } from "../database/conexion.js";
 
 
 export const get_lotes = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM lote");
+        const [rows] = await pool.query("SELECT * FROM lotes");
         res.status(200).json(rows);
     } catch (error) {
         console.error("Error al obtener lotes:", error);
@@ -49,7 +49,7 @@ export const create_lote = async (req, res) => {
         }
 
         const sql = `
-            INSERT INTO lote (codigo, producto_id, cantidad_inicial, cantidad_actual, precio_unitario, fecha_inicio, fecha_cierre, estado, observaciones)
+            INSERT INTO lotes (codigo, producto_id, cantidad_inicial, cantidad_actual, precio_unitario, fecha_inicio, fecha_cierre, estado, observaciones)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
@@ -122,7 +122,7 @@ export const update_lote = async (req, res) => {
         }
 
         const sql = `
-            UPDATE lote
+            UPDATE lotes
             SET codigo = ?, producto_id = ?, cantidad_inicial = ?, cantidad_actual = ?, precio_unitario = ?, fecha_inicio = ?, fecha_cierre = ?, estado = ?, observaciones = ?
             WHERE id = ?
         `;

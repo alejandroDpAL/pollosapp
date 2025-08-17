@@ -33,42 +33,47 @@ export const listarVentas = async (req, res) => {
 };
 
 export const CrearVentas = async (req, res) => {
-  const { id_cliente, id_producto, cantidad, valor_compra, estado_pago, fecha_venta } = req.body;
+  const { lote_id, cliente_id, cantidad, precio_unitario, fecha_venta, observaciones, usuario_id } = req.body;
 
   try {
-    // Verificar stock disponible
-    const [producto] = await pool.query('SELECT cantidad_producto FROM productos WHERE id_producto = ?', [id_producto]);
+    // Verificar stock del lote
+    const [lote] = await pool.query("SELECT cantidad_actual FROM lotes WHERE id = ?", [lote_id]);
 
-    if (producto.length === 0) {
-      return res.status(404).json({ message: "Producto no encontrado" });
+    if (lote.length === 0) {
+      return res.status(404).json({ message: "Lote no encontrado" });
     }
 
-    const stockActual = producto[0].cantidad_producto;
+    const stockActual = lote[0].cantidad_actual;
 
     if (stockActual < cantidad) {
-      return res.status(400).json({ message: "No hay suficiente stock para realizar la venta" });
+      return res.status(400).json({ message: "No hay suficiente stock en el lote" });
     }
 
-    // Insertar la venta
+    // Calcular valor total
+    const valor_total = cantidad * precio_unitario;
+
+    // Insertar venta
     const sqlVenta = `
-      INSERT INTO ventas (id_cliente, id_producto, cantidad, valor_compra, estado_pago, fecha_venta)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO ventas (lote_id, cliente_id, cantidad, precio_unitario, valor_total, fecha_venta, observaciones, usuario_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const [ventaResult] = await pool.query(sqlVenta, [
-      id_cliente,
-      id_producto,
+    await pool.query(sqlVenta, [
+      lote_id,
+      cliente_id || null,
       cantidad,
-      valor_compra,
-      estado_pago,
-      fecha_venta
+      precio_unitario,
+      valor_total,
+      fecha_venta,
+      observaciones || null,
+      usuario_id || null
     ]);
 
-    // Actualizar stock
+    // Actualizar stock del lote
     const sqlUpdateStock = `
-      UPDATE productos SET cantidad_producto = cantidad_producto - ?
-      WHERE id_producto = ?
+      UPDATE lotes SET cantidad_actual = cantidad_actual - ?
+      WHERE id = ?
     `;
-    await pool.query(sqlUpdateStock, [cantidad, id_producto]);
+    await pool.query(sqlUpdateStock, [cantidad, lote_id]);
 
     res.status(200).json({
       message: "Venta registrada y stock actualizado correctamente"
