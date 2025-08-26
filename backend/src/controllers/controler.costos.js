@@ -19,11 +19,11 @@ export const Get_costos = async (req, res) => {
 }
 
 export const create_costos = async (req, res) => {
-    const { lote_id, categoria, concepto, monto, fecha_costo, observaciones } = req.body;
+    const { lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion } = req.body;
 
     try {
         // Validar campos obligatorios
-        const camposObligatorios = { lote_id, categoria, concepto, monto, fecha_costo };
+        const camposObligatorios = { lote_id, nombre, valor, fecha_compra, fecha_creacion };
         const faltantes = Object.entries(camposObligatorios)
             .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === '')
             .map(([campo]) => campo);
@@ -36,17 +36,17 @@ export const create_costos = async (req, res) => {
 
         // SQL de inserción
         const sql = `
-            INSERT INTO costos (lote_id, categoria, concepto, monto, fecha_costo, observaciones)
+            INSERT INTO costos (lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
 
         const [rows] = await pool.query(sql, [
             lote_id,
-            categoria,
-            concepto,
-            monto,
-            fecha_costo,
-            observaciones || null
+            nombre,
+            valor,
+            fecha_compra,
+            observaciones || null,
+            fecha_creacion
         ]);
 
         if (rows.affectedRows > 0) {
@@ -67,6 +67,7 @@ export const create_costos = async (req, res) => {
         });
     }
 };
+
 
 export const update_costos = async (req, res) => {
     const { id } = req.params;

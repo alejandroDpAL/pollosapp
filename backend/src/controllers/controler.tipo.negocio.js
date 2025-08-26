@@ -2,7 +2,7 @@ import { pool } from "../database/conexion.js";
 
 export const get_tipo_negocio = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM tipo_negocio");
+        const [rows] = await pool.query("SELECT * FROM negocio");
         res.status(200).json(rows);
     } catch (error) {
         console.error("Error al obtener tipos de negocio:", error);
@@ -14,42 +14,58 @@ export const get_tipo_negocio = async (req, res) => {
 };
 
 // POST crear tipo de negocio
-export const create_tipo_negocio = async (req, res) => {
-    const { nombre, descripcion, activo } = req.body;
+export const create_negocio = async (req, res) => {
+  const { nombre, descripcion, activo, logo, correo, fecha, telefono } = req.body;
 
-    try {
-        // Validar campo obligatorio
-        if (!nombre || nombre.trim() === "") {
-            return res.status(400).json({
-                message: "El campo 'nombre' es obligatorio."
-            });
-        }
+  try {
+    // Validar campos obligatorios
+    const camposObligatorios = { nombre, logo, correo, telefono };
+    const faltantes = Object.entries(camposObligatorios)
+      .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
+      .map(([campo]) => campo);
 
-        const sql = `
-            INSERT INTO tipo_negocio (nombre, descripcion, activo)
-            VALUES (?, ?, ?)
-        `;
-
-        const [result] = await pool.query(sql, [
-            nombre,
-            descripcion || null,
-            activo !== undefined ? activo : 1
-        ]);
-
-        if (result.affectedRows > 0) {
-            res.status(201).json({
-                message: "Tipo de negocio creado con éxito.",
-                id: result.insertId
-            });
-        }
-    } catch (error) {
-        console.error("Error al crear tipo de negocio:", error);
-        res.status(500).json({
-            message: "Error en el servidor.",
-            error: error.message
-        });
+    if (faltantes.length > 0) {
+      return res.status(400).json({
+        message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
+      });
     }
+
+    // SQL de inserción
+    const sql = `
+      INSERT INTO negocio (nombre, descripcion, activo, logo, correo, fecha, telefono)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await pool.query(sql, [
+      nombre,
+      descripcion || null,
+      activo !== undefined ? activo : 1, // por defecto activo
+      logo,
+      correo,
+      fecha || null,
+      telefono
+    ]);
+
+    if (result.affectedRows > 0) {
+      return res.status(201).json({
+        message: "Tipo de negocio creado con éxito.",
+        id: result.insertId
+      });
+    }
+
+    return res.status(400).json({
+      message: "No se logró crear el tipo de negocio, intente nuevamente."
+    });
+
+  } catch (error) {
+    console.error("Error al crear tipo de negocio:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
 };
+
 
 
 export const update_tipo_negocio = async (req, res) => {

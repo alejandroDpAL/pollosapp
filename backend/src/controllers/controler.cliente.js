@@ -3,12 +3,7 @@ import { pool } from "../database/conexion.js";
 export const listarClientes = async (req, res) => {
   try {
     let sql =
-      `SELECT 
-      clientes.nombre, 
-      productos.nombre_producto AS producto, 
-      clientes.cantidad, 
-      clientes.valor_compra
-       FROM clientes INNER JOIN productos ON clientes.producto = productos.id_producto`;
+      `SELECT * FROM clientes`;
 
     const [result] = await pool.query(sql);
     if (result.length > 0) {
@@ -26,34 +21,42 @@ export const listarClientes = async (req, res) => {
 };
 
 export const CrearClientes = async (req, res) => {
-  const { nombre, producto, cantidad, valor_compra } = req.body;
+  const { usuario_id, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
-    let sql =
-      "INSERT INTO clientes (nombre, producto, cantidad, valor_compra) values (?,?,?,?)";
+    let sql = `
+      INSERT INTO clientes (usuario_id, nombre, telefono, correo, direccion, estado) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
 
     const [rows] = await pool.query(sql, [
+      usuario_id || null,
       nombre,
-      producto,
-      cantidad,
-      valor_compra,
+      telefono || null,
+      correo || null,
+      direccion || null,
+      estado ?? 1  // si no envías estado, se guarda como 1 (activo)
     ]);
 
     if (rows.affectedRows > 0) {
       res.status(200).json({
-        message: "Cliente registrado con exito.",
+        message: "Cliente registrado con éxito.",
+        id: rows.insertId
       });
     } else {
       res.status(403).json({
-        message: "No se logro registrar el Cliente intente nuevamente.",
+        message: "No se logró registrar el cliente, intente nuevamente."
       });
     }
   } catch (error) {
+    console.error("Error al registrar cliente:", error);
     res.status(500).json({
-      message: "Error al conectarse con el servidor." + error,
+      message: "Error en el servidor.",
+      error: error.message
     });
   }
 };
+
 
 export const ActualizarCliente = async (req, res) => {
   const { id_cliente } = req.params;

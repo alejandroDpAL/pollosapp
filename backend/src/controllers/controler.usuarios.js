@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 export const listarUsuarios = async (req, res) => {
   try {
-    let sql = "SELECT * FROM usuario";
+    let sql = "SELECT * FROM usuarios";
 
     const [result] = await pool.query(sql);
     if (result.length > 0) {
@@ -21,30 +21,50 @@ export const listarUsuarios = async (req, res) => {
 };
 
 export const CrearUsuarios = async (req, res) => {
-  const { identificacion, nombre_usuario, correo, password } = req.body;
+  const { nombre, identificacion, telefono, correo, password, cargo, estado } = req.body;
 
   try {
+    // Validar campos obligatorios
+    if (!nombre || !identificacion || !correo || !password) {
+      return res.status(400).json({
+        message: "Los campos 'nombre', 'identificacion', 'correo' y 'password' son obligatorios."
+      });
+    }
 
+    // Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    let sql =
-      "INSERT INTO usuario (identificacion, nombre_usuario, correo, password) values (?,?,?,?)";
+    const sql = `
+      INSERT INTO usuarios (nombre, identificacion, telefono, correo, password, cargo, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
 
-    const [rows] = await pool.query(sql, [identificacion, nombre_usuario, correo, hashedPassword,]);
+    const [result] = await pool.query(sql, [
+      nombre,
+      identificacion,
+      telefono || null,
+      correo,
+      hashedPassword,
+      cargo || null,
+      estado || "activo"
+    ]);
 
-    if (rows.affectedRows > 0) {
-      res.status(200).json({
-        message: "Usuario registrado con exito.",
-      });
-    } else {
-      res.status(403).json({
-        message: "No se registro el usuario intente nuevamente.",
+    if (result.affectedRows > 0) {
+      return res.status(201).json({
+        message: "Usuario registrado con éxito.",
+        id: result.insertId
       });
     }
+
+    return res.status(400).json({
+      message: "No se pudo registrar el usuario, intente nuevamente."
+    });
   } catch (error) {
+    console.error("Error al crear usuario:", error);
     res.status(500).json({
-      message: "Error al conectarse con el servidor." + error,
+      message: "Error en el servidor.",
+      error: error.message
     });
   }
 };
