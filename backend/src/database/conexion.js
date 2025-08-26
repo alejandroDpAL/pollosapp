@@ -15,7 +15,7 @@ export const pool = createPool({
 (async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Conectado exitosamente a la base de datos');
+    console.log(' Conectado exitosamente a la base de datos');
     connection.release(); // Libera la conexión
   } catch (error) {
     console.error('❌ Error al conectar a la base de datos:', error.message);
