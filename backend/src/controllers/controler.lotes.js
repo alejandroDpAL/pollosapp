@@ -15,70 +15,72 @@ export const get_lotes = async (req, res) => {
 };
 
 export const create_lote = async (req, res) => {
-    const {
-        codigo,
-        producto_id,
-        cantidad_inicial,
-        cantidad_actual,
-        precio_unitario,
-        fecha_inicio,
-        fecha_cierre,
-        estado,
-        observaciones
-    } = req.body;
+  const {
+    producto_id,
+    cantidad_inicial,
+    cantidad_actual,
+    precio,
+    fecha,
+    descripcion,
+    nombre
+  } = req.body;
 
-    try {
-        // Validar campos obligatorios
-        const camposObligatorios = {
-            codigo,
-            producto_id,
-            cantidad_inicial,
-            cantidad_actual,
-            precio_unitario,
-            fecha_inicio
-        };
+  try {
+    // Validar campos obligatorios
+    const camposObligatorios = {
+      producto_id,
+      cantidad_inicial,
+      cantidad_actual,
+      precio,
+      fecha,
+      nombre
+    };
 
-        const faltantes = Object.entries(camposObligatorios)
-            .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
-            .map(([campo]) => campo);
+    const faltantes = Object.entries(camposObligatorios)
+      .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
+      .map(([campo]) => campo);
 
-        if (faltantes.length > 0) {
-            return res.status(400).json({
-                message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
-            });
-        }
-
-        const sql = `
-            INSERT INTO lotes (codigo, producto_id, cantidad_inicial, cantidad_actual, precio_unitario, fecha_inicio, fecha_cierre, estado, observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        const [result] = await pool.query(sql, [
-            codigo,
-            producto_id,
-            cantidad_inicial,
-            cantidad_actual,
-            precio_unitario,
-            fecha_inicio,
-            fecha_cierre || null,
-            estado || "activo",
-            observaciones || null
-        ]);
-
-        if (result.affectedRows > 0) {
-            res.status(201).json({
-                message: "Lote creado con éxito.",
-                id: result.insertId
-            });
-        }
-    } catch (error) {
-        console.error("Error al crear lote:", error);
-        res.status(500).json({
-            message: "Error en el servidor.",
-            error: error.message
-        });
+    if (faltantes.length > 0) {
+      return res.status(400).json({
+        message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
+      });
     }
+
+    // SQL de inserción
+    const sql = `
+      INSERT INTO lotes (producto_id, cantidad_inicial, cantidad_actual, precio, fecha, descripcion, nombre)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await pool.query(sql, [
+      producto_id,
+      cantidad_inicial,
+      cantidad_actual,
+      precio,
+      fecha,
+      descripcion || null,
+      nombre
+    ]);
+
+    if (result.affectedRows > 0) {
+      res.status(201).json({
+        message: "Lote creado con éxito.",
+        id: result.insertId
+      });
+    } else {
+      res.status(403).json({
+        message: "No se logró crear el lote, intente nuevamente."
+      });
+    }
+  } catch (error) {
+    console.error("Error al crear lote:", error);
+    res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
 };
+
 
 export const update_lote = async (req, res) => {
     const { id } = req.params;

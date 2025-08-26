@@ -3,8 +3,8 @@ import { get_reportes_lote, create_reporte_lote, update_reporte_lote } from "../
 
 const router = Router();
 
-router.get("/reportes-lote", get_reportes_lote);
-router.post("/reportes-lote", create_reporte_lote);
-router.put("/reportes-lote/:id", update_reporte_lote);
+router.get("/listar", get_reportes_lote);
+router.post("/crear_repoerte_lote", create_reporte_lote);
+router.put("/updatelote/:id", update_reporte_lote);
 
 export default router;

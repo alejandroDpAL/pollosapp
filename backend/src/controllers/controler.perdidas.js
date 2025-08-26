@@ -17,47 +17,53 @@ export const get_perdidas = async (req, res) => {
 
 // POST crear pérdida
 export const create_perdida = async (req, res) => {
-    const { lote_id, cantidad, motivo, descripcion, fecha_perdida } = req.body;
+  const { lote_id, cantidad, motivo, descripcion, fecha_perdida } = req.body;
 
-    try {
-        // Validar campos obligatorios
-        const camposObligatorios = { lote_id, cantidad, motivo, fecha_perdida };
-        const faltantes = Object.entries(camposObligatorios)
-            .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
-            .map(([campo]) => campo);
+  try {
+    // Validar campos obligatorios
+    const camposObligatorios = { lote_id, cantidad, motivo, fecha_perdida };
+    const faltantes = Object.entries(camposObligatorios)
+      .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
+      .map(([campo]) => campo);
 
-        if (faltantes.length > 0) {
-            return res.status(400).json({
-                message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
-            });
-        }
-
-        const sql = `
-            INSERT INTO perdidas (lote_id, cantidad, motivo, descripcion, fecha_perdida)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        const [result] = await pool.query(sql, [
-            lote_id,
-            cantidad,
-            motivo,
-            descripcion || null,
-            fecha_perdida
-        ]);
-
-        if (result.affectedRows > 0) {
-            res.status(201).json({
-                message: "Pérdida registrada con éxito.",
-                id: result.insertId
-            });
-        }
-    } catch (error) {
-        console.error("Error al crear pérdida:", error);
-        res.status(500).json({
-            message: "Error en el servidor.",
-            error: error.message
-        });
+    if (faltantes.length > 0) {
+      return res.status(400).json({
+        message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
+      });
     }
+
+    // SQL de inserción (fecha_creacion se autogenera con CURRENT_TIMESTAMP)
+    const sql = `
+      INSERT INTO perdidas (lote_id, cantidad, motivo, descripcion, fecha_perdida)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await pool.query(sql, [
+      lote_id,
+      cantidad,
+      motivo,
+      descripcion || null,
+      fecha_perdida
+    ]);
+
+    if (result.affectedRows > 0) {
+      return res.status(201).json({
+        message: "Pérdida registrada con éxito.",
+        id: result.insertId
+      });
+    }
+
+    return res.status(400).json({
+      message: "No se logró registrar la pérdida, intente nuevamente."
+    });
+
+  } catch (error) {
+    console.error("Error al crear pérdida:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
 };
 
 // PUT actualizar pérdida

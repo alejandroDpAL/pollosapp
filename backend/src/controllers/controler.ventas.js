@@ -3,18 +3,7 @@ import { pool } from "../database/conexion.js";
 export const listarVentas = async (req, res) => {
   try {
     let sql =
-      `SELECT 
-      ventas.id_venta,
-      clientes.nombre AS Cliente,
-      productos.nombre_producto AS Producto_comprado,
-      ventas.cantidad ,
-      ventas.valor_compra,
-      ventas.estado_pago,
-      DATE_FORMAT(ventas.fecha_venta, '%Y-%m-%d') AS fecha_venta
-
-      FROM ventas
-      INNER JOIN clientes ON ventas.id_cliente = clientes.id_cliente
-      INNER JOIN productos ON ventas.id_producto = productos.id_producto
+      `SELECT * FROM ventas
       `;
 
     const [result] = await pool.query(sql);
@@ -33,20 +22,27 @@ export const listarVentas = async (req, res) => {
 };
 
 export const CrearVentas = async (req, res) => {
-  const { lote_id, cliente_id, cantidad, precio_unitario, fecha_venta, observaciones, usuario_id } = req.body;
+  const { lote_id, cliente_id, usuario_id, cantidad, precio_unitario, fecha, observaciones } = req.body;
 
   try {
+    // Validar campos obligatorios
+    if (!lote_id || !cantidad || !precio_unitario || !fecha) {
+      return res.status(400).json({
+        message: "Los campos 'lote_id', 'cantidad', 'precio_unitario' y 'fecha' son obligatorios."
+      });
+    }
+
     // Verificar stock del lote
     const [lote] = await pool.query("SELECT cantidad_actual FROM lotes WHERE id = ?", [lote_id]);
 
     if (lote.length === 0) {
-      return res.status(404).json({ message: "Lote no encontrado" });
+      return res.status(404).json({ message: "Lote no encontrado." });
     }
 
     const stockActual = lote[0].cantidad_actual;
 
     if (stockActual < cantidad) {
-      return res.status(400).json({ message: "No hay suficiente stock en el lote" });
+      return res.status(400).json({ message: "No hay suficiente stock en el lote." });
     }
 
     // Calcular valor total
@@ -54,39 +50,42 @@ export const CrearVentas = async (req, res) => {
 
     // Insertar venta
     const sqlVenta = `
-      INSERT INTO ventas (lote_id, cliente_id, cantidad, precio_unitario, valor_total, fecha_venta, observaciones, usuario_id)
+      INSERT INTO ventas (lote_id, cliente_id, usuario_id, cantidad, precio_unitario, valor_total, fecha, observaciones)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await pool.query(sqlVenta, [
+    const [result] = await pool.query(sqlVenta, [
       lote_id,
       cliente_id || null,
+      usuario_id || null,
       cantidad,
       precio_unitario,
       valor_total,
-      fecha_venta,
-      observaciones || null,
-      usuario_id || null
+      fecha,
+      observaciones || null
     ]);
 
     // Actualizar stock del lote
     const sqlUpdateStock = `
-      UPDATE lotes SET cantidad_actual = cantidad_actual - ?
+      UPDATE lotes 
+      SET cantidad_actual = cantidad_actual - ? 
       WHERE id = ?
     `;
     await pool.query(sqlUpdateStock, [cantidad, lote_id]);
 
-    res.status(200).json({
-      message: "Venta registrada y stock actualizado correctamente"
+    res.status(201).json({
+      message: "Venta registrada y stock actualizado correctamente.",
+      id: result.insertId,
+      valor_total
     });
 
   } catch (error) {
     console.error("Error al registrar la venta:", error);
     res.status(500).json({
-      message: "Error del servidor: " + error.message
+      message: "Error del servidor.",
+      error: error.message
     });
   }
 };
-
 
 export const ActualizarVentas = async (req, res) => {
   const { id_cliente } = req.params;

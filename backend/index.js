@@ -30,7 +30,7 @@ server.use('/costos', routeCostos);
 server.use('/lote', routeLotes);
 server.use('/perdida', routePerdidas);
 server.use('/reporte-lote', routeReportesLote);
-server.use('/tipo-negocio', routeTipoNegocio);
+server.use('/negocio', routeTipoNegocio);
 
 const port = 3000;
 server.listen(port, '0.0.0.0', () => {

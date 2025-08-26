@@ -3,7 +3,7 @@ import { get_lotes, create_lote, update_lote } from "../controllers/controler.lo
 
 const routeLotes = Router();
 
-routeLotes.get("/lotes", get_lotes);
+routeLotes.get("/listar", get_lotes);
 routeLotes.post("/crear-lotes", create_lote);
 routeLotes.put("/lotes/:id", update_lote);
 

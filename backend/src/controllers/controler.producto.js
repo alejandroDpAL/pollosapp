@@ -25,30 +25,55 @@ export const listarProductos = async (req, res) => {
 
 
 export const CrearProductos = async (req, res) => {
-  const { nombre_producto, cantidad_producto, costo, fecha_compra, fecha_venta} = req.body;
+  const { nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta } = req.body;
 
   try {
+    // Validar campos obligatorios
+    const camposObligatorios = { nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta };
+    const faltantes = Object.entries(camposObligatorios)
+      .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
+      .map(([campo]) => campo);
 
-    let sql =
-      "INSERT INTO productos (nombre_producto, cantidad_producto, costo, fecha_compra, fecha_venta) values (?,?,?,?,?)";
-
-    const [rows] = await pool.query(sql, [nombre_producto, cantidad_producto, costo, fecha_compra, fecha_venta]);
-
-    if (rows.affectedRows > 0) {
-      res.status(200).json({
-        message: "Producto registrado con exito.",
-      });
-    } else {
-      res.status(403).json({
-        message: "No se logro registrar el producto intente nuevamente.",
+    if (faltantes.length > 0) {
+      return res.status(400).json({
+        message: `Faltan los siguientes campos obligatorios: ${faltantes.join(", ")}`
       });
     }
+
+    const sql = `
+      INSERT INTO productos (nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    const [rows] = await pool.query(sql, [
+      nombre,
+      negocio_id,
+      cantidad,
+      costo,
+      fecha_compra,
+      fecha_venta
+    ]);
+
+    if (rows.affectedRows > 0) {
+      return res.status(201).json({
+        message: "Producto registrado con éxito.",
+        id: rows.insertId
+      });
+    }
+
+    return res.status(400).json({
+      message: "No se logró registrar el producto, intente nuevamente."
+    });
+
   } catch (error) {
+    console.error("Error al registrar producto:", error);
     res.status(500).json({
-      message: "Error al conectarse con el servidor." + error,
+      message: "Error en el servidor.",
+      error: error.message
     });
   }
 };
+
 
 export const ActualizarProducto = async (req, res) => {
 
