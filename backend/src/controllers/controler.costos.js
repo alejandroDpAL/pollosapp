@@ -71,7 +71,7 @@ export const create_costos = async (req, res) => {
 
 export const update_costos = async (req, res) => {
     const { id } = req.params;
-    const { lote_id, categoria, concepto, monto, fecha_costo, observaciones } = req.body;
+     const { lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion } = req.body;
 
     try {
         // Validar ID
@@ -82,7 +82,7 @@ export const update_costos = async (req, res) => {
         }
 
         // Validar campos obligatorios
-        const camposObligatorios = { lote_id, categoria, concepto, monto, fecha_costo };
+        const camposObligatorios = { lote_id, nombre, valor, fecha_compra, fecha_creacion };
         const faltantes = Object.entries(camposObligatorios)
             .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
             .map(([campo]) => campo);
@@ -96,17 +96,18 @@ export const update_costos = async (req, res) => {
         // SQL para actualizar
         const sql = `
             UPDATE costos
-            SET lote_id = ?, categoria = ?, concepto = ?, monto = ?, fecha_costo = ?, observaciones = ?
+            SET lote_id = ?, nombre = ?, valor = ?, fecha_compra = ?, observaciones = ?, fecha_creacion = ?
             WHERE id = ?
         `;
+        // lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion
 
         const [result] = await pool.query(sql, [
             lote_id,
-            categoria,
-            concepto,
-            monto,
-            fecha_costo,
+            nombre,
+            valor,
+            fecha_compra,
             observaciones || null,
+            fecha_creacion,
             id
         ]);
 

@@ -88,34 +88,43 @@ export const CrearVentas = async (req, res) => {
 };
 
 export const ActualizarVentas = async (req, res) => {
-  const { id_cliente } = req.params;
-  const { nombre, producto, cantidad, valor_compra } = req.body;
+  const { id_venta } = req.params;
+  const { lote_id, cliente_id, usuario_id, cantidad, precio_unitario, fecha, observaciones } = req.body;
 
   try {
+    // Validar ID
+    if (!id_venta || isNaN(Number(id_venta))) {
+      return res.status(400).json({ message: "El ID de la venta es requerido y debe ser válido." });
+    }
+
     const sql = `
-      UPDATE clientes
-      SET nombre = ?,producto = ?, cantidad = ?, valor_compra = ?
-      WHERE id_cliente = ?
+      UPDATE ventas
+      SET lote_id = ?, cliente_id = ?, usuario_id = ?, cantidad = ?, 
+          precio_unitario = ?, fecha = ?, observaciones = ?
+      WHERE id = ?
     `;
 
     const [result] = await pool.query(sql, [
-      nombre,
-      producto,
+      lote_id,
+      cliente_id,
+      usuario_id,
       cantidad,
-      valor_compra,
-      id_cliente,
+      precio_unitario,
+      fecha,
+      observaciones,
+      id_venta,
     ]);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: "Cliente actualizado con éxito." });
+      res.status(200).json({ message: "La venta fue actualizada correctamente." });
     } else {
-      res
-        .status(404)
-        .json({ message: "No se encontró el cliente para actualizar." });
+      res.status(404).json({ message: "No se encontró la venta para actualizar." });
     }
   } catch (error) {
+    console.error("Error al actualizar venta:", error);
     res.status(500).json({
-      message: "Error al conectarse con el servidor: " + error.message,
+      message: "Ocurrió un error interno al actualizar la venta.",
+      error: error.message,
     });
   }
 };

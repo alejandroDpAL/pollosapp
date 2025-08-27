@@ -71,79 +71,104 @@ export const CrearUsuarios = async (req, res) => {
 
 export const ActualizarUsuario = async (req, res) => {
   const { id_usuario } = req.params;
-  const { identificacion, nombre_usuario, correo, password } = req.body;
+  const { nombre, identificacion, telefono, correo, password, cargo, estado } = req.body;
 
   try {
-    // Validar ID
-    if (!id_usuario || isNaN(id_usuario)) {
-      return res.status(400).json({ message: 'El ID del usuario es requerido y debe ser válido.' });
-    }
-    // Validar campos obligatorios dinámicamente
-    // const camposObligatorios = { identificacion, nombre_usuario, correo };
-    // const faltantes = Object.entries(camposObligatorios)
-    //   .filter(([_, valor]) => !valor || valor.toString().trim() === '')
-    //   .map(([campo]) => campo);
-
-    // if (faltantes.length > 0) {
-    //   return res.status(400).json({
-    //     message: `Faltan los siguientes campos obligatorios: ${faltantes.join(', ')}`
-    //   });
-    // }
-
-
-
-
-    // Validar correo con regex
-    const Validate_Email = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    if (!Validate_Email.test(correo)) {
-      return res.status(400).json({ message: 'El correo no es válido.' });
+    
+    if (!id_usuario || isNaN(Number(id_usuario))) {
+      return res.status(400).json({ message: "El identificador del usuario es requerido y debe ser un número válido." });
     }
 
-    //  Valida que los datos sean iguales
-    const [existe] = await pool.query(
-      'SELECT id FROM usuario WHERE (identificacion = ? OR correo = ?) AND id <> ?',
-      [identificacion, correo, id_usuario]
-    );
-    if (existe.length > 0) {
-      return res.status(409).json({
-        message: 'Ya existe un usuario con esa identificación o correo.'
-      });
+    
+    const [user] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [id_usuario]);
+    if (user.length === 0) {
+      return res.status(404).json({ message: "El usuario solicitado no existe en el sistema." });
     }
 
+  
+    let sql = "UPDATE usuarios SET ";
+    const params = [];
+    const updates = [];
 
-    let sql = `
-      UPDATE usuario 
-      SET identificacion = ?, nombre_usuario = ?, correo = ?
-    `;
-    const params = [identificacion, nombre_usuario, correo];
+    if (identificacion) {
+      updates.push("identificacion = ?");
+      params.push(identificacion);
+    }
 
-    // Si se envió password, validamos y lo actualizamos
-    if (password && password.trim() !== '') {
+    if (nombre) {
+      updates.push("nombre = ?");
+      params.push(nombre);
+    }
+
+    if (telefono) {
+      updates.push("telefono = ?");
+      params.push(telefono);
+    }
+
+    if (correo) {
+      
+      const Validate_Email =
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      if (!Validate_Email.test(correo)) {
+        return res.status(400).json({ message: "El correo electrónico proporcionado no tiene un formato válido." });
+      }
+
+      
+      const [existeCorreo] = await pool.query(
+        "SELECT id FROM usuarios WHERE correo = ? AND id <> ?",
+        [correo, id_usuario]
+      );
+      if (existeCorreo.length > 0) {
+        return res.status(409).json({ message: "El correo electrónico ya está registrado en otro usuario." });
+      }
+
+      updates.push("correo = ?");
+      params.push(correo);
+    }
+
+    if (cargo) {
+      updates.push("cargo = ?");
+      params.push(cargo);
+    }
+
+    if (estado !== undefined) {
+      updates.push("estado = ?");
+      params.push(estado);
+    }
+
+    if (password && password.trim() !== "") {
       if (password.length < 6) {
         return res.status(400).json({
-          message: 'La contraseña debe tener al menos 6 caracteres.'
+          message: "La contraseña debe tener al menos 6 caracteres.",
         });
       }
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-      sql += `, password = ?`;
+      updates.push("password = ?");
       params.push(hashedPassword);
     }
 
-    sql += ` WHERE id = ?`;
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No se proporcionaron campos para actualizar." });
+    }
+
+    sql += updates.join(", ") + " WHERE id = ?";
     params.push(id_usuario);
 
-    //  consulta
+ 
     const [result] = await pool.query(sql, params);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: 'Usuario actualizado con éxito.' });
+      res.status(200).json({ message: "La información del usuario se actualizó correctamente." });
     } else {
-      res.status(404).json({ message: 'No se encontró el usuario para actualizar.' });
+      res.status(400).json({ message: "No se realizaron cambios en la información del usuario." });
     }
   } catch (error) {
+    console.error("Error al actualizar usuario:", error);
     res.status(500).json({
-      message: 'Error al actualizar el usuario: ' + error.message,
+      message: "Ocurrió un error interno al actualizar el usuario. Intente nuevamente más tarde.",
+      error: error.message,
     });
   }
 };
