@@ -76,31 +76,37 @@ export const CrearProductos = async (req, res) => {
 
 
 export const ActualizarProducto = async (req, res) => {
-
-  const { id_producto } = req.params;
-  const { nombre_producto, cantidad_producto, costo, fecha_compra, fecha_venta} = req.body;
+  const { id } = req.params; // aquí usamos "id", que es la columna real en la tabla
+  const { nombre, cantidad, costo, fecha_compra, fecha_venta } = req.body;
 
   try {
-
     const sql = `
       UPDATE productos
-      SET nombre_producto = ?, cantidad_producto = ?, costo = ?, fecha_compra = ?, fecha_venta = ?
-      WHERE id_producto = ?
+      SET nombre = ?, cantidad = ?, costo = ?, fecha_compra = ?, fecha_venta = ?
+      WHERE id = ?
     `;
 
-    const [result] = await pool.query(sql, [nombre_producto, cantidad_producto, costo, fecha_compra, fecha_venta,id_producto]);
+    const [result] = await pool.query(sql, [
+      nombre,
+      cantidad,
+      costo,
+      fecha_compra,
+      fecha_venta,
+      id,
+    ]);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: 'Producto actualizado con éxito.' });
+      res.status(200).json({ message: "Producto actualizado con éxito." });
     } else {
-      res.status(404).json({ message: 'No se encontró el producto para actualizar.' });
+      res.status(404).json({ message: "No se encontró el producto para actualizar." });
     }
   } catch (error) {
     res.status(500).json({
-      message: 'Error al conectarse con el servidor: ' + error.message,
+      message: "Error al conectarse con el servidor: " + error.message,
     });
   }
 };
+
 
 export const EliminarProductos = async (req, res) => {
   try {
