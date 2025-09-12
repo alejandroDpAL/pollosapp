@@ -19,6 +19,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 const Dashboard = () => {
   return (
     <View style={styles.completa}>
+      {/* principal */}
       <HeaderPrincipal title={"Asogasinga"}/>
       <View style={styles.content}>
         <View style={styles.contentGrafic}></View>
