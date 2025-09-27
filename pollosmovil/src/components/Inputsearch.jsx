@@ -10,7 +10,7 @@ const SearchBar = ({ value, onChangeText, placeholder }) => {
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
-/*         placeholder={placeholder || 'Buscar...'} */
+        /*         placeholder={placeholder || 'Buscar...'} */
         placeholderTextColor="#999"
       />
     </View>

@@ -1,32 +1,58 @@
-import { View, StyleSheet, TouchableOpacity, Animated, Text } from 'react-native';
+
+import { View, StyleSheet, TouchableOpacity, Animated, Text, Dimensions } from 'react-native';
 import React, { useRef, useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from '@react-native-community/blur';
 import { useNavigation } from '@react-navigation/native';
 
+const { width, height } = Dimensions.get('window');
+
 const Boton = () => {
   const [open, setOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
 
   const toggleMenu = () => {
     const toValue = open ? 0 : 1;
-    Animated.spring(animation, {
-      toValue,
-      friction: 5,
-      useNativeDriver: true,
-    }).start();
+
+    // Animación principal
+    Animated.parallel([
+      Animated.spring(animation, {
+        toValue,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rotateAnimation, {
+        toValue,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start();
+
     setOpen(!open);
   };
 
-  // estilos animados para cada botón
+  // Rotación del botón principal
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'],
+  });
+
+  // Estilos animados mejorados para cada botón
   const productoStyle = {
     transform: [
-      { scale: animation },
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.3, 1],
+        })
+      },
       {
         translateY: animation.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -70],
+          outputRange: [0, -80],
         }),
       },
     ],
@@ -35,11 +61,16 @@ const Boton = () => {
 
   const ventasStyle = {
     transform: [
-      { scale: animation },
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.3, 1],
+        })
+      },
       {
         translateY: animation.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -140],
+          outputRange: [0, -160],
         }),
       },
     ],
@@ -48,63 +79,104 @@ const Boton = () => {
 
   const clienteStyle = {
     transform: [
-      { scale: animation },
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.3, 1],
+        })
+      },
       {
         translateY: animation.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -210],
+          outputRange: [0, -240],
         }),
       },
     ],
     opacity: animation,
   };
 
+  const menuItems = [
+    {
+      label: 'Productos',
+      icon: 'food-drumstick',
+      style: productoStyle,
+      color: '#FF6B6B',
+      onPress: () => {
+        toggleMenu();
+        navigation.navigate('productos');
+      }
+    },
+    {
+      label: 'Nueva venta',
+      icon: 'cart-plus',
+      style: ventasStyle,
+      color: '#4ECDC4',
+      onPress: () => {
+        toggleMenu();
+        // navigation.navigate('nueva-venta');
+      }
+    },
+    {
+      label: 'Clientes',
+      icon: 'account-plus',
+      style: clienteStyle,
+      color: '#45B7D1',
+      onPress: () => {
+        toggleMenu();
+        navigation.navigate('clientes');
+      }
+    }
+  ];
+
   return (
-    <View style={StyleSheet.absoluteFill}>
-      {/* Fondo semitransparente */}
-      {open && ( 
-          <BlurView
-             style={StyleSheet.absoluteFill}
-             blurType="light"  
-             blurAmount={20}
-             reducedTransparencyFallbackColor="white"
-       />)}
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none" >
+      {/* Fondo con blur mejorado */}
+      {
+        open && (
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={toggleMenu}
+          >
+            <BlurView
+              style={StyleSheet.absoluteFill}
+              blurType="light"
+              blurAmount={10}
+              reducedTransparencyFallbackColor="rgba(255,255,255,0.8)"
+            />
+          </TouchableOpacity>
+        )}
 
-      <View style={styles.container}>
-<Animated.View style={[styles.secondary, productoStyle]}>
-  <View style={styles.row}>
-    <Text style={styles.label}>Productos</Text>
-    <TouchableOpacity style={styles.btn} 
-    onPress={() => 
-    {toggleMenu(); 
-    navigation.navigate('productos')}}>
-      <Icon name="food-drumstick" size={26} color="#fff" />
-    </TouchableOpacity>
-  </View>
-</Animated.View>
+      <View style={styles.container} pointerEvents="box-none" >
+        {/* Botones secundarios */}
+        {
+          menuItems.map((item, index) => (
+            <Animated.View key={index} style={[styles.secondary, item.style]} >
+              <View style={styles.row} >
+                <View style={styles.labelContainer} >
+                  <Text style={styles.label} > {item.label} </Text>
+                </View>
+                < TouchableOpacity
+                  style={[styles.btn, { backgroundColor: item.color }]}
+                  onPress={item.onPress}
+                  activeOpacity={0.8}
+                >
+                  <Icon name={item.icon} size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          ))
+        }
 
-<Animated.View style={[styles.secondary, ventasStyle]}>
-  <View style={styles.row}>
-    <Text style={styles.label}>Nueva venta</Text>
-    <TouchableOpacity style={styles.btn}>
-      <Icon name="plus" size={26} color="#fff" />
-    </TouchableOpacity>
-  </View>
-</Animated.View>
-
-<Animated.View style={[styles.secondary, clienteStyle]}>
-  <View style={styles.row}>
-    <Text style={styles.label}>Clientes</Text>
-    <TouchableOpacity style={styles.btn} onPress={() => {toggleMenu(); navigation.navigate('clientes')}}>
-      <Icon name="account-plus" size={26} color="#fff" />
-    </TouchableOpacity>
-  </View>
-</Animated.View>
-
-
-        {/* Botón principal */}
-        <TouchableOpacity style={styles.mainBtn} onPress={toggleMenu}>
-          <Icon name={open ? 'close' : 'plus'} size={32} color="#fff" />
+        {/* Botón principal mejorado */}
+        <TouchableOpacity
+          style={styles.mainBtn}
+          onPress={toggleMenu}
+          activeOpacity={0.8}
+        >
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <Icon name="plus" size={28} color="#fff" />
+          </Animated.View>
         </TouchableOpacity>
       </View>
     </View>
@@ -118,7 +190,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'white',
     opacity: 0.7
-    
+
   },
   container: {
     position: 'absolute',
@@ -128,40 +200,69 @@ const styles = StyleSheet.create({
   },
   mainBtn: {
     marginTop: 15,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'hsla(212, 100%, 50%, 1)',
+    width: 55,        //width: 70,
+    height: 55,      //height: 70,
+    borderRadius: 30,
+    backgroundColor: '#ff6b6b',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    right: -90
+    elevation: 8,
+    right: -90,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   secondary: {
     position: 'absolute',
+
   },
   row: {
-    marginRight: -60,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 170
+    justifyContent: 'flex-end',
+    width: width * 0.6,
+    marginRight: -8,
+  },
+  labelContainer: {
+    marginRight: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   label: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    fontSize: 16,
-    elevation: 3,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
   },
   btn: {
-    width: 55,
-    height: 55,
+    width: 56,
+    height: 56,
     borderRadius: 28,
-    backgroundColor: '#0fa2cfff',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
 });

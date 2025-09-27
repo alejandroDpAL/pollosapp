@@ -11,16 +11,16 @@ const { width } = Dimensions.get("window");
 const tabs = ["todas", "realizada", "pendiente"];
 
 const Business = () => {
-/*   const [searchText, setSearchText] = useState(''); */
+  /*   const [searchText, setSearchText] = useState(''); */
   const [filter, setFilter] = useState("todas");
   const indicator = useRef(new Animated.Value(0)).current;
 
   const ventas = [
-    { id: 1, cliente: "Pepe", producto: "Pollo", cantidad: 2,valor: 28000, fecha: "17/08/2025", estado: "realizada" },
-    { id: 2, cliente: "Lucho", producto: "Pollo",cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
-    { id: 3, cliente: "Lucho", producto: "Pollo",cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
-    { id: 4, cliente: "Lucho", producto: "Pollo",cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
-    { id: 5, cliente: "Lucho", producto: "Pollo",cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
+    { id: 1, cliente: "Pepe", producto: "Pollo", cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "realizada" },
+    { id: 2, cliente: "Lucho", producto: "Pollo", cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
+    { id: 3, cliente: "Lucho", producto: "Pollo", cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
+    { id: 4, cliente: "Lucho", producto: "Pollo", cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
+    { id: 5, cliente: "Lucho", producto: "Pollo", cantidad: 2, valor: 28000, fecha: "17/08/2025", estado: "pendiente" },
   ];
 
   const filteredVentas = filter === "todas" ? ventas : ventas.filter(v => v.estado === filter);
@@ -40,7 +40,7 @@ const Business = () => {
   return (
     <View style={styles.container}>
       <HeaderPrincipal title="Ventas">
-{/*       <SearchBar
+        {/*       <SearchBar
       Value = {searchText}
       onChangeText={setSearchText}
       /> */}
@@ -90,6 +90,7 @@ const Business = () => {
           </View>
         ))}
       </ScrollView>
+      
       <Boton />
       <Menu />
     </View>

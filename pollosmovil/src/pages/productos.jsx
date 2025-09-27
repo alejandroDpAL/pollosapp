@@ -6,14 +6,14 @@ import HeaderPrincipal from '../components/header'
 const productos = () => {
   return (
     <View style={styles.container}>
-      <HeaderPrincipal title= "Productos"/>
-      <Menu/>
+      <HeaderPrincipal title="Productos" />
+      <Menu />
     </View>
   )
 
 }
-const styles = StyleSheet.create ({
-  container : {
+const styles = StyleSheet.create({
+  container: {
     flex: 1,
     backgroundColor: "#fff3f3ff",
   }

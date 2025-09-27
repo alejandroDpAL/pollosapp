@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const Menu = () => {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState({handlePress});
+  const [selected, setSelected] = useState({ handlePress });
 
   const handlePress = (route, name) => {
     setSelected(name);

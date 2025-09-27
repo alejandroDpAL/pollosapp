@@ -5,21 +5,21 @@ import Menu from '../components/bottom.navigation'
 
 const clientes = () => {
   return (
-    
-    <View style={styles.container}>
-        <HeaderPrincipal title="Clientes">
 
-        </HeaderPrincipal>
+    <View style={styles.container}>
+      <HeaderPrincipal title="Clientes">
+
+      </HeaderPrincipal>
       <Text>clientes</Text>
-      <Menu/>
+      <Menu />
     </View>
   )
 }
-const styles = StyleSheet.create ({
-    container: {
-        flex:1,
-        backgroundColor: "#fff3f3ff",
-    }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff3f3ff",
+  }
 })
 
 export default clientes
