@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import HeaderPrincipal from '../components/header.jsx';
 import Menu from '../components/bottom.navigation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import GraphTest from "../components/Graficas.componet.jsx";
 
 const Dashboard = () => {
     return (
@@ -19,10 +20,9 @@ const Dashboard = () => {
                 {/* Gráfico */}
                 <View style={styles.graphSection}>
 
-
+                    <GraphTest />
 
                     
-                    {/* <GraphTest /> */}
                 </View>
 
                 {/* Cards */}
