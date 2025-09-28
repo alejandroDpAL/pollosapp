@@ -7,6 +7,7 @@ import GraphTest from "../components/Graficas.componet.jsx";
 
 const Dashboard = () => {
     return (
+        
         <View style={styles.container}>
             {/* Header fijo */}
             <HeaderPrincipal title="Asogasinga" />
@@ -66,9 +67,7 @@ const Dashboard = () => {
 
 
             {/* Menú fijo */}
-            <View style={styles.menuContainer}>
-                <Menu />
-            </View>
+          
         </View>
     );
 };

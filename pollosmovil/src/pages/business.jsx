@@ -92,8 +92,9 @@ const Business = () => {
       </ScrollView>
       
       <Boton />
-      <Menu />
+    
     </View>
+    
   );
 };
 

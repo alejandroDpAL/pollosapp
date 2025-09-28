@@ -369,7 +369,7 @@ const Estadisticas = () => {
         <View style={{ height: Math.max(screenHeight * 0.1, 60) }} />
       </ScrollView>
 
-      <Menu />
+
     </View>
   );
 };

@@ -84,7 +84,7 @@ const Ajustes = () => {
       />
 
 
-      <Menu />
+ 
 
 
     </SafeAreaView>
