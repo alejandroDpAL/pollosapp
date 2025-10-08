@@ -8,16 +8,19 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    Image
+    Image,
+    Alert
 } from "react-native";
 import HeaderPrincipal from '../components/header.jsx';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 export default function Perfil() {
     const navigation = useNavigation();
 
-    // Estados para los campos
+    // Estados
+    const [imagen, setImagen] = useState(null);
     const [identificacion, setIdentificacion] = useState("");
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
@@ -28,6 +31,37 @@ export default function Perfil() {
     const actualizarPerfil = () => {
         console.log({ identificacion, nombre, telefono, correo, contrasena, direccion });
         alert("Perfil actualizado correctamente");
+    };
+
+    // Seleccionar imagen (cámara o galería)
+    const seleccionarImagen = () => {
+        Alert.alert(
+            "Seleccionar imagen",
+            "Elige una opción",
+            [
+                {
+                    text: "Cámara",
+                    onPress: () => {
+                        launchCamera({ mediaType: "photo", includeBase64: false }, (response) => {
+                            if (response.assets && response.assets.length > 0) {
+                                setImagen(response.assets[0].uri);
+                            }
+                        });
+                    }
+                },
+                {
+                    text: "Galería",
+                    onPress: () => {
+                        launchImageLibrary({ mediaType: "photo", includeBase64: false }, (response) => {
+                            if (response.assets && response.assets.length > 0) {
+                                setImagen(response.assets[0].uri);
+                            }
+                        });
+                    }
+                },
+                { text: "Cancelar", style: "cancel" }
+            ]
+        );
     };
 
     return (
@@ -47,31 +81,32 @@ export default function Perfil() {
                     {/* Avatar */}
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatar}>
-                            <Icon name='pencil' size={20} color={'black'} style={styles.editIcon} />
-                            <Icon name='account' size={60} color={'black'} />
+                            <TouchableOpacity onPress={seleccionarImagen} style={styles.editIcon}>
+                                <Icon name='pencil' size={20} color={'black'} />
+                            </TouchableOpacity>
+                            {imagen ? (
+                                <Image source={{ uri: imagen }} style={styles.avatarImage} />
+                            ) : (
+                                <Icon name='account' size={60} color={'black'} />
+                            )}
                         </View>
-                        {/* <Image
-                            source={{ uri: '' }} 
-                            style={styles.avatar}
-                        /> */}
                         <Text style={styles.title}>Perfil de usuario</Text>
                     </View>
 
                     {/* Campos */}
-                    <Campo label="Identificación" value={identificacion} onChange={setIdentificacion} placeholder="Ingrese su ID" />
+                    <Campo label="Identificación" value={identificacion} onChange={setIdentificacion} placeholder="Ingrese su número de identificación" />
                     <Campo label="Nombre" value={nombre} onChange={setNombre} placeholder="Ingrese su nombre" />
                     <Campo label="Teléfono" value={telefono} onChange={setTelefono} placeholder="Ingrese su teléfono" keyboardType="phone-pad" />
                     <Campo label="Correo" value={correo} onChange={setCorreo} placeholder="Ingrese su correo" keyboardType="email-address" />
                     <Campo label="Contraseña" value={contrasena} onChange={setContrasena} placeholder="Ingrese su contraseña" secureTextEntry={true} />
                     <Campo label="Dirección" value={direccion} onChange={setDireccion} placeholder="Ingrese su dirección" />
 
-                    {/* Update Button */}
+                    {/* Botón */}
                     <TouchableOpacity
                         style={styles.button}
                         onPress={actualizarPerfil}
                         activeOpacity={0.8}
                     >
-
                         <Text style={styles.buttonText}>Actualizar</Text>
                     </TouchableOpacity>
 
@@ -82,7 +117,7 @@ export default function Perfil() {
     );
 }
 
-// Conten Campos Input
+// Campo de texto reutilizable
 const Campo = ({ label, value, onChange, placeholder, keyboardType, secureTextEntry }) => (
     <View style={styles.inputGroup}>
         <Text style={styles.label}>{label}</Text>
@@ -114,13 +149,17 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 6,
         elevation: 5,
     },
-
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
     editIcon: {
         position: 'absolute',
         bottom: 0,
@@ -130,6 +169,7 @@ const styles = StyleSheet.create({
         padding: 5,
         borderWidth: 1,
         borderColor: '#ccc',
+        zIndex: 2,
     },
     title: {
         fontSize: 20,
@@ -154,7 +194,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         backgroundColor: '#fafafa',
     },
-
     button: {
         backgroundColor: '#ff6b6b',
         paddingVertical: 16,
@@ -162,11 +201,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 25,
     },
-
     buttonText: {
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
     },
 });
-;

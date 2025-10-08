@@ -7,7 +7,7 @@ const productos = () => {
   return (
     <View style={styles.container}>
       <HeaderPrincipal title="Productos" />
-      <Menu />
+      <Text>como estas  </Text>
     </View>
   )
 

@@ -130,7 +130,6 @@ const Boton = () => {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none" >
-      {/* Fondo con blur mejorado */}
       {
         open && (
           <TouchableOpacity
@@ -194,14 +193,14 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 15,
     right: 100,
     alignItems: 'center',
   },
   mainBtn: {
     marginTop: 15,
-    width: 55,        //width: 70,
-    height: 55,      //height: 70,
+    width: 55,        
+    height: 55,    
     borderRadius: 30,
     backgroundColor: '#ff6b6b',
     shadowColor: '#000',
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     width: width * 0.6,
-    marginRight: -8,
+    marginRight: 60,
   },
   labelContainer: {
     marginRight: 12,
@@ -245,7 +244,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
