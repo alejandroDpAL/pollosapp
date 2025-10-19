@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 const HeaderPrincipal = ({ title, showBack = false, onBack }) => {
   return (
     <View style={styles.container}>
-      
+
       {showBack ? (
         <TouchableOpacity style={styles.left} onPress={onBack}>
           <Icon name="chevron-left" size={30} color="#000" />
