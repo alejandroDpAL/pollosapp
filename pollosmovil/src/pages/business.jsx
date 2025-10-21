@@ -4,8 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HeaderPrincipal from '../components/header';
 import Menu from '../components/bottom.navigation';
 import Boton from '../components/bottom.plus.jsx';
-/* import SearchBar from '../components/Inputsearch.jsx'; */
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const { width } = Dimensions.get("window");
 const tabs = ["todas", "realizada", "pendiente"];
@@ -90,11 +89,11 @@ const Business = () => {
           </View>
         ))}
       </ScrollView>
-      
+
       <Boton />
-    
+
     </View>
-    
+
   );
 };
 
@@ -103,63 +102,101 @@ export default Business;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff3f3ff",
+    backgroundColor: "#f4f6f8",
   },
+
+
   tabs: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingVertical: 12,
-    color: 'black'
+    paddingVertical: 10,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e6eb",
+    elevation: 2,
   },
   tab: {
     flex: 1,
     alignItems: "center",
+    paddingVertical: 8,
   },
   tabText: {
-    fontSize: 16,
-    color: "#444",
+    fontSize: 15,
+    color: "#6b7280",
+    textTransform: "capitalize",
   },
   tabActive: {
-    fontWeight: "bold",
-    color: "#000",
+    color: "#0077cc",
+    fontWeight: "700",
   },
   barBackground: {
-    height: 10,
-    backgroundColor: "#ddd",
+    height: 6,
+    backgroundColor: "#d1d5db",
     borderRadius: 10,
-    marginHorizontal: 10,
+    marginHorizontal: 18,
     overflow: "hidden",
   },
   barActive: {
-    height: 10,
-    backgroundColor: "green",
+    height: 6,
+    backgroundColor: "#0077cc",
     borderRadius: 10,
   },
+
+
   scroll: {
     flex: 1,
-    padding: 15,
+    paddingHorizontal: 18,
+    paddingTop: 10,
   },
+
+
   card: {
-    backgroundColor: "#ffffffff",
-    borderRadius: 12,
-    padding: 15,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     marginBottom: 15,
-    elevation: 3,
-    position: "relative",
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: "#0077cc",
   },
+
   text: {
-    fontSize: 18,
-    marginBottom: 3,
+    fontSize: 16,
+    color: "#374151",
+    marginBottom: 4,
+    textTransform: "capitalize",
   },
+
   statusIcon: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
   },
+
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 10,
-    gap: 15,
+    marginTop: 12,
+    gap: 18,
+  },
+
+
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0077cc",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  actionText: {
+    color: "#fff",
+    fontWeight: "600",
+    marginLeft: 6,
   },
 });
+

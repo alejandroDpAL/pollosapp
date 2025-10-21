@@ -199,8 +199,8 @@ const styles = StyleSheet.create({
   },
   mainBtn: {
     marginTop: 15,
-    width: 55,        
-    height: 55,    
+    width: 55,
+    height: 55,
     borderRadius: 30,
     backgroundColor: '#ff6b6b',
     shadowColor: '#000',
