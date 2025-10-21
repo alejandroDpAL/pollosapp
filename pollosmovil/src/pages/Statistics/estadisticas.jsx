@@ -7,8 +7,8 @@ import {
   Dimensions,
   PixelRatio
 } from "react-native";
-import HeaderPrincipal from "../components/header";
-import Menu from "../components/bottom.navigation";
+import HeaderPrincipal from "../../components/layout/header";
+import Menu from "../../components/common/bottom.navigation";
 import {
   LineChart,
   BarChart,

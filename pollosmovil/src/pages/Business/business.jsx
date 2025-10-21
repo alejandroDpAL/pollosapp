@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import HeaderPrincipal from '../components/header';
-import Menu from '../components/bottom.navigation';
-import Boton from '../components/bottom.plus.jsx';
+import HeaderPrincipal from '../../components/layout/header.jsx';
+import Menu from '../../components/common/bottom.navigation.jsx';
+import Boton from '../../components/common/bottom.plus.jsx';
 
 
 const { width } = Dimensions.get("window");

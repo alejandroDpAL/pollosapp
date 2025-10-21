@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import HeaderPrincipal from '../components/header.jsx';
-import Menu from '../components/bottom.navigation';
+import HeaderPrincipal from '../../components/layout/header.jsx';
+import Menu from '../../components/common/bottom.navigation.jsx';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import GraphTest from "../components/Graficas.componet.jsx";
+import GraphTest from "../../components/common/Graficas.componet.jsx";
 
 const Dashboard = () => {
     return (

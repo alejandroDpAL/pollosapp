@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useNavigation } from "@react-navigation/native";
 
 
 
@@ -12,6 +13,8 @@ export default function Login({ onLoginSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    const navigation = useNavigation();
+
     // simple email validation
     const isValidEmail = (value) => {
         const re = /\S+@\S+\.\S+/;
@@ -21,7 +24,7 @@ export default function Login({ onLoginSuccess }) {
     // handle the fake login action (client-side only)
     const handleLogin = () => {
         setError("");
-       
+
         if (!email.trim() || !password) {
             setError("Por favor completa todos los campos.");
             return;
@@ -35,14 +38,15 @@ export default function Login({ onLoginSuccess }) {
             return;
         }
 
-      
+
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-          
+
             if (typeof onLoginSuccess === "function") {
                 onLoginSuccess({ email });
-            } else {
+            }
+            else {
                 Alert.alert("Inicio de sesión", "Inicio de sesión exitoso (simulado).");
             }
             // clear form
@@ -52,7 +56,7 @@ export default function Login({ onLoginSuccess }) {
         }, 900);
     };
 
- 
+
     const handleEmailChange = (text) => {
         setEmail(text);
         if (error) setError("");

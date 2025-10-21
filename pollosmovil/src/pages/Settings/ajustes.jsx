@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import React, { useState } from 'react';
-import HeaderPrincipal from '../components/header';
-import Menu from '../components/bottom.navigation';
+import HeaderPrincipal from '../../components/layout/header';
+import Menu from '../../components/common/bottom.navigation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import Modal from '../components/Modal.componet';
+import Modal from '../../components/common/Modal.componet';
 
 
 
