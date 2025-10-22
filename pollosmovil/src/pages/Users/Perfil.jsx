@@ -11,7 +11,7 @@ import {
     Image,
     Alert
 } from "react-native";
-import HeaderPrincipal from '../components/header.jsx';
+import HeaderPrincipal from '../../components/layout/header.jsx';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';

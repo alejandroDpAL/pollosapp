@@ -10,9 +10,9 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import HeaderPrincipal from "../components/header";
-import Modal from "../components/Modal.componet";
-import { getProducts } from "../Hook/Api/productApi";
+import HeaderPrincipal from "../../components/layout/header";
+import Modal from "../../components/common/Modal.componet";
+import { getProducts } from "../../Hook/Api/productApi";
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
