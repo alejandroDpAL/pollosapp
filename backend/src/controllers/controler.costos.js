@@ -71,7 +71,7 @@ export const create_costos = async (req, res) => {
 
 export const update_costos = async (req, res) => {
     const { id } = req.params;
-     const { lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion } = req.body;
+    const { lote_id, nombre, valor, fecha_compra, observaciones, fecha_creacion } = req.body;
 
     try {
         // Validar ID

@@ -110,11 +110,11 @@ export const ActualizarProducto = async (req, res) => {
 
 export const EliminarProductos = async (req, res) => {
   try {
-    const {id_producto} = req.params;
+    const { id_producto } = req.params;
 
     let sql = "DELETE FROM productos WHERE id_producto = ?";
 
-    const [result] = await pool.query(sql,[id_producto]);
+    const [result] = await pool.query(sql, [id_producto]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({

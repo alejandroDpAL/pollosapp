@@ -131,7 +131,7 @@ export const ActualizarVentas = async (req, res) => {
 
 export const EliminarVentas = async (req, res) => {
   try {
-    const { id_venta  } = req.params;
+    const { id_venta } = req.params;
 
     let sql = "DELETE FROM ventas WHERE id_venta = ?";
 

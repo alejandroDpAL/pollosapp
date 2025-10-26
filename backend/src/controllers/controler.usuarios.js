@@ -22,49 +22,64 @@ export const listarUsuarios = async (req, res) => {
 
 export const CrearUsuarios = async (req, res) => {
   const { nombre, identificacion, telefono, correo, password, cargo, estado } = req.body;
+  const saltRounds = 10; // nivel de seguridad para hash bcrypt
 
   try {
-    // Validar campos obligatorios
-    if (!nombre || !identificacion || !correo || !password) {
+    // 1️ Validar campos obligatorios
+    if (!nombre?.trim() || !identificacion?.trim() || !correo?.trim() || !password?.trim()) {
       return res.status(400).json({
-        message: "Los campos 'nombre', 'identificacion', 'correo' y 'password' son obligatorios."
+        message: "Los campos 'nombre', 'identificación', 'correo' y 'password' son obligatorios.",
       });
     }
 
-    // Encriptar contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // 2️ Validar formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    }
 
+    // 3️ Verificar si el correo ya existe
+    const [existingUser] = await pool.query(
+      "SELECT id FROM usuarios WHERE correo = ? LIMIT 1",
+      [correo]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(409).json({ message: "El correo electrónico ya está registrado." });
+    }
+
+    // 4️ Encriptar contraseña
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // 5️ Insertar nuevo usuario
     const sql = `
       INSERT INTO usuarios (nombre, identificacion, telefono, correo, password, cargo, estado)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await pool.query(sql, [
-      nombre,
-      identificacion,
-      telefono || null,
-      correo,
+      nombre.trim(),
+      identificacion.trim(),
+      telefono?.trim() || null,
+      correo.trim().toLowerCase(),
       hashedPassword,
-      cargo || null,
-      estado || "activo"
+      cargo?.trim() || null,
+      estado?.trim() || "activo",
     ]);
 
+    // 6️Confirmar inserción
     if (result.affectedRows > 0) {
       return res.status(201).json({
         message: "Usuario registrado con éxito.",
-        id: result.insertId
+        id: result.insertId,
       });
     }
 
-    return res.status(400).json({
-      message: "No se pudo registrar el usuario, intente nuevamente."
-    });
+    return res.status(400).json({ message: "No se pudo registrar el usuario, intente nuevamente." });
   } catch (error) {
     console.error("Error al crear usuario:", error);
-    res.status(500).json({
-      message: "Error en el servidor.",
-      error: error.message
+    return res.status(500).json({
+      message: "Error interno del servidor.",
     });
   }
 };
@@ -74,18 +89,18 @@ export const ActualizarUsuario = async (req, res) => {
   const { nombre, identificacion, telefono, correo, password, cargo, estado } = req.body;
 
   try {
-    
+
     if (!id_usuario || isNaN(Number(id_usuario))) {
       return res.status(400).json({ message: "El identificador del usuario es requerido y debe ser un número válido." });
     }
 
-    
+
     const [user] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [id_usuario]);
     if (user.length === 0) {
       return res.status(404).json({ message: "El usuario solicitado no existe en el sistema." });
     }
 
-  
+
     let sql = "UPDATE usuarios SET ";
     const params = [];
     const updates = [];
@@ -106,14 +121,14 @@ export const ActualizarUsuario = async (req, res) => {
     }
 
     if (correo) {
-      
+
       const Validate_Email =
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
       if (!Validate_Email.test(correo)) {
         return res.status(400).json({ message: "El correo electrónico proporcionado no tiene un formato válido." });
       }
 
-      
+
       const [existeCorreo] = await pool.query(
         "SELECT id FROM usuarios WHERE correo = ? AND id <> ?",
         [correo, id_usuario]
@@ -148,7 +163,7 @@ export const ActualizarUsuario = async (req, res) => {
       params.push(hashedPassword);
     }
 
-    
+
     if (updates.length === 0) {
       return res.status(400).json({ message: "No se proporcionaron campos para actualizar." });
     }
@@ -156,7 +171,7 @@ export const ActualizarUsuario = async (req, res) => {
     sql += updates.join(", ") + " WHERE id = ?";
     params.push(id_usuario);
 
- 
+
     const [result] = await pool.query(sql, params);
 
     if (result.affectedRows > 0) {
