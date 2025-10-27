@@ -135,3 +135,39 @@ export const EliminarProductos = async (req, res) => {
 
 
 
+export const listarProductosPorUsuario = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    if (!usuario_id) {
+      return res.status(400).json({
+        message: "El ID del usuario es obligatorio."
+      });
+    }
+
+    // Consulta: productos de los negocios pertenecientes al usuario
+    const sql = `
+      SELECT p.*
+      FROM productos p
+      INNER JOIN negocios n ON p.negocio_id = n.id
+      WHERE n.usuario_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [usuario_id]);
+
+    if (rows.length > 0) {
+      res.status(200).json(rows);
+    } else {
+      res.status(404).json({
+        message: "No se encontraron productos para este usuario."
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al obtener productos por usuario:", error);
+    res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
+};

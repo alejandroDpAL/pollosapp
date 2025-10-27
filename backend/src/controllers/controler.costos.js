@@ -128,3 +128,36 @@ export const update_costos = async (req, res) => {
         });
     }
 };
+
+
+
+
+// Obtener costos filtrados por usuario_id
+export const Get_costosByUsuario = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    if (!usuario_id || isNaN(usuario_id)) {
+      return res.status(400).json({
+        message: "El ID de usuario es requerido y debe ser válido.",
+      });
+    }
+
+    const sql = "SELECT * FROM costos WHERE usuario_id = ?";
+    const [rows] = await pool.query(sql, [usuario_id]);
+
+    if (rows.length > 0) {
+      res.status(200).json(rows);
+    } else {
+      res.status(404).json({
+        message: "No se encontraron costos para este usuario.",
+      });
+    }
+  } catch (error) {
+    console.error("Error al obtener costos por usuario:", error);
+    res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message,
+    });
+  }
+};

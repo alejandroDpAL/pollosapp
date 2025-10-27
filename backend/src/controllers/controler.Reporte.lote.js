@@ -189,3 +189,40 @@ export const update_reporte_lote = async (req, res) => {
     });
   }
 };
+
+
+export const get_reportes_lote_por_usuario = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    if (!usuario_id) {
+      return res.status(400).json({
+        message: "El ID del usuario es obligatorio.",
+      });
+    }
+
+    // Consulta que une reportes_lote con lotes (y opcionalmente con negocios)
+    const sql = `
+      SELECT rl.*
+      FROM reportes_lote rl
+      INNER JOIN lotes l ON rl.lote_id = l.id
+      WHERE l.usuario_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [usuario_id]);
+
+    if (rows.length > 0) {
+      return res.status(200).json(rows);
+    } else {
+      return res.status(404).json({
+        message: "No se encontraron reportes de lote para este usuario.",
+      });
+    }
+  } catch (error) {
+    console.error("Error al obtener reportes de lote por usuario:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message,
+    });
+  }
+};
