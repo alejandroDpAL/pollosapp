@@ -3,19 +3,19 @@ import api from "./apiConnection";
 
 export const loginUser = async (user, password) => {
   try {
-    const response = await api.post("/auth/authLogin", { 
-      user, 
-      password 
+    const response = await api.post("/auth/authLogin", {
+      user,
+      password
     });
-    
+
     // Extraer los datos del usuario de la respuesta del backend
     const { message, user: userData } = response.data;
-    
+
     // Verificar que tengamos el ID del usuario
     if (!userData || !userData.id) {
       throw new Error("Error de autenticación: No se recibió información del usuario");
     }
-    
+
     // Retornar los datos estructurados
     return {
       success: true,
@@ -30,7 +30,7 @@ export const loginUser = async (user, password) => {
     if (error.response) {
       const status = error.response.status;
       const message = error.response.data?.message;
-      
+
       // Errores específicos del backend
       switch (status) {
         case 400:

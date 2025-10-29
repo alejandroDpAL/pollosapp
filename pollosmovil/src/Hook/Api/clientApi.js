@@ -14,6 +14,19 @@ export const getClients = async () => {
 };
 
 
+export const getClientById = async (id) => {
+  try {
+    const response = await api.get(`/cliente/ClienteUsuario/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    console.log(error);
+
+    throw error;
+  }
+};
+
+
 // Create a new client
 export const createClient = async (clientData) => {
   try {
