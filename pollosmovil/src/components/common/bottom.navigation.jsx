@@ -16,7 +16,7 @@ const Menu = () => {
     <View style={styles.container}>
       <TouchableOpacity
         style={[styles.iconWrapper, selected === "home" && styles.active]}
-        onPress={() => handlePress("app", "home")}
+        onPress={() => handlePress("home")}
       >
         <Icon
           name="home-outline"

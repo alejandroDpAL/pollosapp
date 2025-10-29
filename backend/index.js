@@ -14,6 +14,7 @@ import routeLotes from './src/rutas/ruta.lotes.js';
 import routePerdidas from './src/rutas/ruta.perdidas.js';
 import routeReportesLote from './src/rutas/ruta.reportes.lote.js';
 import routeTipoNegocio from './src/rutas/ruta.tipo.negocio.js';
+import authRouter from './src/rutas/ruta.auth.js';
 
 const server = express();
 
@@ -23,6 +24,7 @@ server.use(cors());
 
 /* rutas  */
 server.use('/usuario', routeUsers);
+server.use('/auth',authRouter)
 server.use('/producto', routeProducts);
 server.use('/cliente', routeClientes);
 server.use('/ventas', routeVentas);

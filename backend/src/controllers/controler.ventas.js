@@ -131,7 +131,7 @@ export const ActualizarVentas = async (req, res) => {
 
 export const EliminarVentas = async (req, res) => {
   try {
-    const { id_venta  } = req.params;
+    const { id_venta } = req.params;
 
     let sql = "DELETE FROM ventas WHERE id_venta = ?";
 
@@ -149,6 +149,41 @@ export const EliminarVentas = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "ERROR DE PARTE DEL SERVIDOR" + error,
+    });
+  }
+};
+
+
+export const get_negocios_por_usuario = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    if (!usuario_id) {
+      return res.status(400).json({
+        message: "El ID del usuario es obligatorio."
+      });
+    }
+
+    const sql = `
+      SELECT *
+      FROM negocio
+      WHERE usuario_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [usuario_id]);
+
+    if (rows.length > 0) {
+      return res.status(200).json(rows);
+    } else {
+      return res.status(404).json({
+        message: "No se encontraron negocios registrados para este usuario."
+      });
+    }
+  } catch (error) {
+    console.error("Error al obtener negocios por usuario:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
     });
   }
 };

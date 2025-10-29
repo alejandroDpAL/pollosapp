@@ -1,251 +1,382 @@
+// src/pages/Auth/Login.jsx
 import React, { useState } from "react";
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, } from "react-native";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { useNavigation } from "@react-navigation/native";
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Alert,
+    ActivityIndicator,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    StatusBar,
+} from "react-native";
+import { useAuth } from "../../Hook/context/AuthContext";
+import { loginUser } from "../../Hook/Api/auth.Api";
 
-
-
-export default function Login({ onLoginSuccess }) {
-    // form state
+export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [secure, setSecure] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [emailFocused, setEmailFocused] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState({ email: "", password: "" });
 
-    const navigation = useNavigation();
+    const { login } = useAuth();
 
-    // simple email validation
-    const isValidEmail = (value) => {
-        const re = /\S+@\S+\.\S+/;
-        return re.test(value);
+    // Validación de email en tiempo real
+    const validateEmail = (text) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setEmail(text);
+        if (text && !emailRegex.test(text)) {
+            setErrors((prev) => ({ ...prev, email: "Formato de correo inválido" }));
+        } else {
+            setErrors((prev) => ({ ...prev, email: "" }));
+        }
     };
 
-    // handle the fake login action (client-side only)
-    const handleLogin = () => {
-        setError("");
-
-        if (!email.trim() || !password) {
-            setError("Por favor completa todos los campos.");
-            return;
-        }
-        if (!isValidEmail(email)) {
-            setError("Ingresa un correo válido.");
-            return;
-        }
-        if (password.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres.");
+    const handleLogin = async () => {
+        // Validaciones locales
+        if (!email.trim() || !password.trim()) {
+            Alert.alert("Campos requeridos", "Por favor complete todos los campos");
             return;
         }
 
+        if (errors.email) {
+            Alert.alert("Error", "Por favor ingrese un correo válido");
+            return;
+        }
 
         setLoading(true);
-        setTimeout(() => {
+
+        try {
+            const response = await loginUser(email, password);
+
+            if (response.success) {
+                login(response.user);
+            }
+        } catch (error) {
+            // Manejo de errores del backend
+            Alert.alert(
+                "Error de autenticación",
+                error.message || "Credenciales inválidas",
+                [{ text: "Entendido", style: "default" }]
+            );
+        } finally {
             setLoading(false);
-
-            if (typeof onLoginSuccess === "function") {
-                onLoginSuccess({ email });
-            }
-            else {
-                Alert.alert("Inicio de sesión", "Inicio de sesión exitoso (simulado).");
-            }
-            // clear form
-            setEmail("");
-            setPassword("");
-            setSecure(true);
-        }, 900);
-    };
-
-
-    const handleEmailChange = (text) => {
-        setEmail(text);
-        if (error) setError("");
-    };
-
-    const handlePasswordChange = (text) => {
-        setPassword(text);
-        if (error) setError("");
+        }
     };
 
     return (
-        <SafeAreaView style={styles.safe}>
+        <>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.container}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <View style={styles.card}>
-                    <Text style={styles.title}>Bienvenido</Text>
-                    <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
-
-                    <View style={styles.form}>
-                        <View style={styles.inputRow}>
-                            <Icon name="email-outline" size={20} color="#6b7280" style={styles.inputIcon} />
-                            <TextInput
-                                value={email}
-                                onChangeText={handleEmailChange}
-                                placeholder="Correo electrónico"
-                                placeholderTextColor="#9ca3af"
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                style={styles.input}
-                                returnKeyType="next"
-                                editable={!loading}
-                            />
+                <View style={styles.content}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View style={styles.logoContainer}>
+                            <View style={styles.logoBadge}>
+                                <Text style={styles.logoText}>P</Text>
+                            </View>
                         </View>
+                        <Text style={styles.companyName}>POLLOS APP</Text>
+                        <Text style={styles.tagline}>Sistema de Gestión Empresarial</Text>
+                    </View>
 
-                        <View style={styles.inputRow}>
-                            <Icon name="lock-outline" size={20} color="#6b7280" style={styles.inputIcon} />
-                            <TextInput
-                                value={password}
-                                onChangeText={handlePasswordChange}
-                                placeholder="Contraseña"
-                                placeholderTextColor="#9ca3af"
-                                secureTextEntry={secure}
-                                style={[styles.input, { paddingRight: 44 }]}
-                                returnKeyType="done"
-                                editable={!loading}
-                            />
-                            <TouchableOpacity
-                                onPress={() => setSecure((s) => !s)}
-                                style={styles.toggleSecure}
-                                disabled={loading}
+                    {/* Form Card */}
+                    <View style={styles.formCard}>
+                        <Text style={styles.formTitle}>Iniciar Sesión</Text>
+                        <Text style={styles.formSubtitle}>
+                            Ingrese sus credenciales para acceder al sistema
+                        </Text>
+
+                        {/* Email Input */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Correo Electrónico</Text>
+                            <View
+                                style={[
+                                    styles.inputContainer,
+                                    emailFocused && styles.inputFocused,
+                                    errors.email && styles.inputError,
+                                ]}
                             >
-                                <Icon name={secure ? "eye-off" : "eye"} size={20} color="#6b7280" />
-                            </TouchableOpacity>
+                                <TextInput
+                                    placeholder="usuario@empresa.com"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={email}
+                                    onChangeText={validateEmail}
+                                    onFocus={() => setEmailFocused(true)}
+                                    onBlur={() => setEmailFocused(false)}
+                                    style={styles.input}
+                                    autoCapitalize="none"
+                                    keyboardType="email-address"
+                                    autoComplete="email"
+                                    editable={!loading}
+                                />
+                            </View>
+                            {errors.email ? (
+                                <Text style={styles.errorText}>{errors.email}</Text>
+                            ) : null}
                         </View>
 
-                        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                        {/* Password Input */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Contraseña</Text>
+                            <View
+                                style={[
+                                    styles.inputContainer,
+                                    passwordFocused && styles.inputFocused,
+                                ]}
+                            >
+                                <TextInput
+                                    placeholder="Ingrese su contraseña"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    onFocus={() => setPasswordFocused(true)}
+                                    onBlur={() => setPasswordFocused(false)}
+                                    secureTextEntry={!showPassword}
+                                    style={[styles.input, styles.passwordInput]}
+                                    autoComplete="password"
+                                    editable={!loading}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeButton}
+                                    disabled={loading}
+                                >
+                                    <Text style={styles.eyeText}>
+                                        {showPassword ? "Ocultar" : "Mostrar"}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
+                        {/* Login Button */}
                         <TouchableOpacity
-                            style={[styles.button, (loading || !email || !password) && styles.buttonDisabled]}
                             onPress={handleLogin}
-                            disabled={loading}
+                            disabled={loading || !!errors.email}
+                            style={[
+                                styles.loginButton,
+                                (loading || errors.email) && styles.loginButtonDisabled,
+                            ]}
+                            activeOpacity={0.7}
                         >
-                            <Text style={styles.buttonText}>{loading ? "Ingresando..." : "Iniciar sesión"}</Text>
+                            {loading ? (
+                                <View style={styles.buttonContent}>
+                                    <ActivityIndicator color="#fff" size="small" />
+                                    <Text style={styles.loginButtonText}>Autenticando...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                            )}
                         </TouchableOpacity>
 
-                        <View style={styles.row}>
-                            <TouchableOpacity>
-                                <Text style={styles.link}>¿Olvidaste tu contraseña?</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity>
-                                <Text style={[styles.link, styles.linkPrimary]}>Regístrate</Text>
+                        {/* Help Text */}
+                        <View style={styles.helpContainer}>
+                            <Text style={styles.helpText}>
+                                ¿Problemas para acceder?{" "}
+                            </Text>
+                            <TouchableOpacity disabled={loading}>
+                                <Text style={styles.helpLink}>Contactar soporte</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
-                </View>
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Al iniciar, aceptas los términos y políticas.</Text>
+                    {/* Footer */}
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>
+                            © 2025 Pollos App. Todos los derechos reservados.
+                        </Text>
+                        <Text style={styles.footerVersion}>Versión 1.0.0</Text>
+                    </View>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </>
     );
 }
 
 const styles = StyleSheet.create({
-    safe: {
-        flex: 1,
-        backgroundColor: "#f4f6f8",
-    },
     container: {
         flex: 1,
-        padding: 20,
-        justifyContent: "center",
+        backgroundColor: "#F9FAFB",
     },
-    card: {
-        backgroundColor: "#ffffff",
-        borderRadius: 16,
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 60,
+        paddingBottom: 20,
+    },
+    header: {
+        alignItems: "center",
+        marginBottom: 40,
+    },
+    logoContainer: {
+        marginBottom: 16,
+    },
+    logoBadge: {
+        width: 64,
+        height: 64,
+        borderRadius: 12,
+        backgroundColor: "#1F2937",
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    logoText: {
+        fontSize: 32,
+        fontWeight: "700",
+        color: "#fff",
+    },
+    companyName: {
+        fontSize: 24,
+        fontWeight: "700",
+        color: "#111827",
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
+    tagline: {
+        fontSize: 14,
+        color: "#6B7280",
+        fontWeight: "400",
+    },
+    formCard: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
         padding: 24,
         shadowColor: "#000",
-        shadowOpacity: 0.07,
-        shadowRadius: 10,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
     },
-    title: {
-        fontSize: 22,
-        fontWeight: "800",
+    formTitle: {
+        fontSize: 20,
+        fontWeight: "600",
         color: "#111827",
-        textAlign: "center",
+        marginBottom: 6,
     },
-    subtitle: {
+    formSubtitle: {
         fontSize: 14,
-        color: "#6b7280",
-        textAlign: "center",
-        marginTop: 6,
-        marginBottom: 18,
+        color: "#6B7280",
+        marginBottom: 24,
+        lineHeight: 20,
     },
-    form: {
-        marginTop: 6,
+    inputGroup: {
+        marginBottom: 20,
     },
-    inputRow: {
-        position: "relative",
+    label: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: "#374151",
+        marginBottom: 8,
+    },
+    inputContainer: {
         flexDirection: "row",
         alignItems: "center",
+        backgroundColor: "#F9FAFB",
+        borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#e6edf3",
-        backgroundColor: "#fbfdff",
-        borderRadius: 12,
-        paddingLeft: 12,
-        marginBottom: 12,
+        borderColor: "#D1D5DB",
+        paddingHorizontal: 14,
+        height: 48,
     },
-    inputIcon: {
-        marginRight: 8,
+    inputFocused: {
+        borderColor: "#1F2937",
+        backgroundColor: "#fff",
+    },
+    inputError: {
+        borderColor: "#DC2626",
     },
     input: {
         flex: 1,
-        height: 48,
-        color: "#111827",
         fontSize: 15,
+        color: "#111827",
+        paddingVertical: 0,
     },
-    toggleSecure: {
-        position: "absolute",
-        right: 10,
-        height: "100%",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 6,
+    passwordInput: {
+        paddingRight: 10,
+    },
+    eyeButton: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    eyeText: {
+        fontSize: 13,
+        color: "#4B5563",
+        fontWeight: "500",
     },
     errorText: {
-        color: "#b91c1c",
-        fontSize: 13,
-        marginBottom: 8,
-        marginLeft: 4,
+        fontSize: 12,
+        color: "#DC2626",
+        marginTop: 6,
+        marginLeft: 2,
     },
-    button: {
-        backgroundColor: "#0077cc",
-        paddingVertical: 12,
-        borderRadius: 12,
+    loginButton: {
+        backgroundColor: "#1F2937",
+        borderRadius: 8,
+        height: 48,
+        justifyContent: "center",
         alignItems: "center",
-        marginTop: 4,
+        marginTop: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
-    buttonDisabled: {
+    loginButtonDisabled: {
+        backgroundColor: "#9CA3AF",
         opacity: 0.6,
     },
-    buttonText: {
-        color: "#ffffff",
-        fontWeight: "700",
-        fontSize: 16,
-    },
-    row: {
-        marginTop: 14,
+    buttonContent: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 10,
     },
-    link: {
-        color: "#6b7280",
-        fontSize: 13,
+    loginButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
     },
-    linkPrimary: {
-        color: "#0077cc",
+    helpContainer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: 20,
+        alignItems: "center",
+    },
+    helpText: {
+        fontSize: 14,
+        color: "#6B7280",
+    },
+    helpLink: {
+        fontSize: 14,
+        color: "#1F2937",
         fontWeight: "600",
     },
     footer: {
-        marginTop: 18,
+        marginTop: "auto",
         alignItems: "center",
+        paddingTop: 24,
     },
     footerText: {
-        color: "#9ca3af",
         fontSize: 12,
+        color: "#9CA3AF",
+        marginBottom: 4,
+    },
+    footerVersion: {
+        fontSize: 11,
+        color: "#D1D5DB",
     },
 });
