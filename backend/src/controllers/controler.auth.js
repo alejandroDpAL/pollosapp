@@ -2,8 +2,8 @@ import { pool } from "../database/conexion.js";
 import bcrypt from "bcryptjs";
 
 // Configuración
-const SALT_ROUNDS = 10; // para futuros hashes
-const LOGIN_DELAY_MS = 500; // retrasa respuesta en errores (anti brute-force)
+const SALT_ROUNDS = 10;
+const LOGIN_DELAY_MS = 500; 
 
 export const AuthUserController = async (req, res) => {
     const { user, password } = req.body;
