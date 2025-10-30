@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Alert,
+} from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HeaderPrincipal from "../../components/layout/header";
 import Modal from "../../components/common/Modal.componet";
-import { getClients, createClient, updateClient, deleteClient, } from "../../Hook/Api/clientApi";
+import {
+  createClient,
+  updateClient,
+  deleteClient,
+  getClientById,
+} from "../../Hook/Api/clientApi";
+import { useAuth } from "../../Hook/context/AuthContext";
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
@@ -18,40 +33,44 @@ const Clients = () => {
     direccion: "",
   });
 
-  // Load clients from API
+  const { user } = useAuth(); 
+
   useEffect(() => {
     const fetchClients = async () => {
+      if (!user || !user.id) return;
+
       try {
-        const data = await getClients();
-        setClients(data);
-        console.log(data);
+        const data = await getClientById(user.id);
+        setClients(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Error fetching clients:", err);
+        console.error("Error al obtener los clientes:", err);
+        Alert.alert("Error", "No se pudieron cargar los clientes del usuario.");
       }
     };
-    fetchClients();
-  }, []);
 
-  // Handle input changes
+    fetchClients();
+  }, [user]);
+
+  // Manejar cambios de input
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Reset form
+  // Resetear formulario
   const resetForm = () => {
     setFormData({ nombre: "", correo: "", telefono: "", direccion: "" });
     setIsEditing(false);
     setSelectedClient(null);
   };
 
-  // Open modal for new client
+  // Abrir modal para nuevo cliente
   const handleOpenAddModal = () => {
     resetForm();
     setIsEditing(false);
     setModalVisible(true);
   };
 
-  // Save or update client
+  // Guardar o actualizar cliente
   const handleSaveClient = async () => {
     if (!formData.nombre || !formData.telefono) {
       Alert.alert("Campos incompletos", "Por favor completa los campos requeridos.");
@@ -62,19 +81,22 @@ const Clients = () => {
       if (isEditing && selectedClient) {
         await updateClient(selectedClient.id, formData);
       } else {
-        await createClient(formData);
+        await createClient({ ...formData, usuarioId: user.id });
       }
 
-      const updatedClients = await getClients();
-      setClients(updatedClients);
+      // Recargar la lista actualizada
+      const updatedClients = await getClientById(user.id);
+      setClients(Array.isArray(updatedClients) ? updatedClients : []);
+
       setModalVisible(false);
       resetForm();
     } catch (err) {
-      console.error("Error saving client:", err);
+      console.error("Error al guardar el cliente:", err);
+      Alert.alert("Error", "No se pudo guardar el cliente. Intenta nuevamente.");
     }
   };
 
-  // Edit client
+  // Editar cliente
   const handleEditClient = (client) => {
     setFormData(client);
     setSelectedClient(client);
@@ -82,7 +104,7 @@ const Clients = () => {
     setModalVisible(true);
   };
 
-  // Delete client
+  // Eliminar cliente
   const handleDeleteClient = (client) => {
     Alert.alert("Eliminar cliente", `¿Deseas eliminar a ${client.nombre}?`, [
       { text: "Cancelar", style: "cancel" },
@@ -92,10 +114,11 @@ const Clients = () => {
         onPress: async () => {
           try {
             await deleteClient(client.id);
-            const updatedClients = await getClients();
-            setClients(updatedClients);
+            const updatedClients = await getClientById(user.id);
+            setClients(Array.isArray(updatedClients) ? updatedClients : []);
           } catch (err) {
-            console.error("Error deleting client:", err);
+            console.error("Error al eliminar cliente:", err);
+            Alert.alert("Error", "No se pudo eliminar el cliente.");
           }
         },
       },
@@ -107,32 +130,36 @@ const Clients = () => {
       <HeaderPrincipal title="Gestión de Clientes" />
 
       <ScrollView style={styles.container}>
-        {clients.map((client) => (
-          <View key={client.id} style={styles.card}>
-            <Image
-              source={{
-                uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-              }}
-              style={styles.avatar}
-            />
-            <View style={styles.info}>
-              <Text style={styles.name}>{client.nombre}</Text>
-              <Text style={styles.email}>{client.correo || "Sin correo"}</Text>
-              <Text style={styles.phone}>{client.telefono}</Text>
-              <Text style={styles.address}>
-                {client.direccion || "Sin dirección"}
-              </Text>
+        {clients.length === 0 ? (
+          <Text style={styles.emptyText}>No hay clientes registrados.</Text>
+        ) : (
+          clients.map((client) => (
+            <View key={client.id} style={styles.card}>
+              <Image
+                source={{
+                  uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                }}
+                style={styles.avatar}
+              />
+              <View style={styles.info}>
+                <Text style={styles.name}>{client.nombre}</Text>
+                <Text style={styles.email}>{client.correo || "Sin correo"}</Text>
+                <Text style={styles.phone}>{client.telefono}</Text>
+                <Text style={styles.address}>
+                  {client.direccion || "Sin dirección"}
+                </Text>
+              </View>
+              <View style={styles.actions}>
+                <TouchableOpacity onPress={() => handleEditClient(client)}>
+                  <Icon name="pencil" size={22} color="#007bff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteClient(client)}>
+                  <Icon name="delete" size={22} color="#d9534f" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.actions}>
-              <TouchableOpacity onPress={() => handleEditClient(client)}>
-                <Icon name="pencil" size={22} color="#007bff" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDeleteClient(client)}>
-                <Icon name="delete" size={22} color="#d9534f" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+          ))
+        )}
       </ScrollView>
 
       <TouchableOpacity style={styles.addButton} onPress={handleOpenAddModal}>

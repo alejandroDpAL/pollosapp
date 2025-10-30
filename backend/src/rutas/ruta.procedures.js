@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registrarPerdida, registrarVenta, cerrarLote } from "../controllers/controler.procedures.js";
+import { registrarPerdida, registrarVenta, cerrarLote, getPerdidasByUsuario } from "../controllers/controler.procedures.js";
 
 const router = Router();
 
@@ -7,5 +7,6 @@ const router = Router();
 router.post("/procedures/perdidas", registrarPerdida);
 router.post("/procedures/ventas", registrarVenta);
 router.post("/procedures/lotes/cerrar", cerrarLote);
+router.get("/usuario/:usuario_id", getPerdidasByUsuario);
 
 export default router;

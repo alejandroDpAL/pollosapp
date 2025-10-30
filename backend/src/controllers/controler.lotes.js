@@ -156,3 +156,36 @@ export const update_lote = async (req, res) => {
     });
   }
 };
+
+
+// Obtener lotes por usuario_id
+export const get_lotesByUsuario = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    // Validar parámetro
+    if (!usuario_id || isNaN(usuario_id)) {
+      return res.status(400).json({
+        message: "El ID del usuario es requerido y debe ser válido."
+      });
+    }
+
+    // Consultar los lotes del usuario
+    const sql = "SELECT * FROM lotes WHERE usuario_id = ?";
+    const [rows] = await pool.query(sql, [usuario_id]);
+
+    if (rows.length > 0) {
+      res.status(200).json(rows);
+    } else {
+      res.status(404).json({
+        message: "No se encontraron lotes para este usuario."
+      });
+    }
+  } catch (error) {
+    console.error("Error al obtener lotes por usuario:", error);
+    res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
+};
