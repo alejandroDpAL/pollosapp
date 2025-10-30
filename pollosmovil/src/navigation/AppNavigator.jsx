@@ -2,7 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Dashboard from "../pages/Business/Dashboard";
-import Estadisticas from "../pages/Statistics/estadisticas";
+import Estadisticas from "../pages/Statistics/estadisticas.jsx";
 import Ajustes from "../pages/Settings/ajustes";
 import Productos from "../pages/Products/productos";
 import Perfil from "../pages/Users/Perfil";
@@ -29,11 +29,11 @@ export default function AppNavigator({ navigationRef, currentRoute }) {
         <View style={{ flex: 1, paddingBottom: MENU_HEIGHT }}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Dashboard" component={Dashboard} />
-                <Stack.Screen name="Negocios" component={negocios} />
-                <Stack.Screen name="Estadisticas" component={Estadisticas} />
-                <Stack.Screen name="Ajustes" component={Ajustes} />
-                <Stack.Screen name="Productos" component={Productos} />
-                <Stack.Screen name="Clientes" component={clientes} />
+                <Stack.Screen name="negocios" component={negocios} />
+                <Stack.Screen name="estadisticas" component={Estadisticas} />
+                <Stack.Screen name="ajustes" component={Ajustes} />
+                <Stack.Screen name="productos" component={Productos} />
+                <Stack.Screen name="clientes" component={clientes} />
                 <Stack.Screen name="Perfil" component={Perfil} />
                 <Stack.Screen name="Modal" component={Modal} />
             </Stack.Navigator>

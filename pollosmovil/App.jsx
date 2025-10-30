@@ -16,11 +16,11 @@ export default function App() {
         <NavigationContainer>
           {!isLoggedIn ? (
             <AuthNavigator onLoginSuccess={() => setIsLoggedIn(true)} /> 
-          ) : (
+          ) : ( 
             <AppNavigator />
           )}
         </NavigationContainer>
-
+@
       </SafeAreaView>
     </SafeAreaProvider>
   );
