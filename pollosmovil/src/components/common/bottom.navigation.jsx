@@ -20,7 +20,7 @@ const Menu = () => {
       >
         <Icon
           name="home-outline"
-          size={24} // 🔹 más pequeño
+          size={24}   
           color={selected === "home" ? "#000" : "#fff"}
         />
       </TouchableOpacity>

@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HeaderPrincipal from "../../components/layout/header";
 import Modal from "../../components/common/Modal.componet";
@@ -33,7 +24,7 @@ const Clients = () => {
     direccion: "",
   });
 
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchClients = async () => {

@@ -1,19 +1,9 @@
 // src/pages/Auth/Login.jsx
 import React, { useState } from "react";
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Alert,
-    ActivityIndicator,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    StatusBar,
-} from "react-native";
+import {View,Text,TextInput,TouchableOpacity,Alert,ActivityIndicator,StyleSheet,KeyboardAvoidingView,Platform,StatusBar,ScrollView,} from "react-native";
 import { useAuth } from "../../Hook/context/AuthContext";
 import { loginUser } from "../../Hook/Api/auth.Api";
+import ModalAlert from "../../components/common/Modal.Alet";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -23,6 +13,11 @@ export default function Login() {
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({ email: "", password: "" });
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
+    const [modalType, setModalType] = useState("info");
+
 
     const { login } = useAuth();
 
@@ -38,32 +33,34 @@ export default function Login() {
     };
 
     const handleLogin = async () => {
-        // Validaciones locales
         if (!email.trim() || !password.trim()) {
-            Alert.alert("Campos requeridos", "Por favor complete todos los campos");
+            setModalType("warning");
+            setModalMessage("Por favor complete todos los campos");
+            setModalVisible(true);
             return;
         }
 
         if (errors.email) {
-            Alert.alert("Error", "Por favor ingrese un correo válido");
+            setModalType("error");
+            setModalMessage("Por favor ingrese un correo válido");
+            setModalVisible(true);
             return;
         }
 
         setLoading(true);
-
         try {
             const response = await loginUser(email, password);
-
             if (response.success) {
                 login(response.user);
+            } else {
+                setModalType("error");
+                setModalMessage(response.message || "Credenciales inválidas");
+                setModalVisible(true);
             }
         } catch (error) {
-            // Manejo de errores del backend
-            Alert.alert(
-                "Error de autenticación",
-                error.message || "Credenciales inválidas",
-                [{ text: "Entendido", style: "default" }]
-            );
+            setModalType("error");
+            setModalMessage(error.message || "Error de autenticación");
+            setModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -72,131 +69,141 @@ export default function Login() {
     return (
         <>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.container}
             >
-                <View style={styles.content}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <View style={styles.logoContainer}>
-                            <View style={styles.logoBadge}>
-                                <Text style={styles.logoText}>P</Text>
+                <ScrollView >
+                    <View style={styles.content}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <View style={styles.logoContainer}>
+                                <View style={styles.logoBadge}>
+                                    <Text style={styles.logoText}>P</Text>
+                                </View>
                             </View>
-                        </View>
-                        <Text style={styles.companyName}>POLLOS APP</Text>
-                        <Text style={styles.tagline}>Sistema de Gestión Empresarial</Text>
-                    </View>
-
-                    {/* Form Card */}
-                    <View style={styles.formCard}>
-                        <Text style={styles.formTitle}>Iniciar Sesión</Text>
-                        <Text style={styles.formSubtitle}>
-                            Ingrese sus credenciales para acceder al sistema
-                        </Text>
-
-                        {/* Email Input */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Correo Electrónico</Text>
-                            <View
-                                style={[
-                                    styles.inputContainer,
-                                    emailFocused && styles.inputFocused,
-                                    errors.email && styles.inputError,
-                                ]}
-                            >
-                                <TextInput
-                                    placeholder="usuario@empresa.com"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={email}
-                                    onChangeText={validateEmail}
-                                    onFocus={() => setEmailFocused(true)}
-                                    onBlur={() => setEmailFocused(false)}
-                                    style={styles.input}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    autoComplete="email"
-                                    editable={!loading}
-                                />
-                            </View>
-                            {errors.email ? (
-                                <Text style={styles.errorText}>{errors.email}</Text>
-                            ) : null}
+                            <Text style={styles.companyName}>POLLOS APP</Text>
+                            <Text style={styles.tagline}>Sistema de Gestión Empresarial</Text>
                         </View>
 
-                        {/* Password Input */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Contraseña</Text>
-                            <View
-                                style={[
-                                    styles.inputContainer,
-                                    passwordFocused && styles.inputFocused,
-                                ]}
-                            >
-                                <TextInput
-                                    placeholder="Ingrese su contraseña"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    onFocus={() => setPasswordFocused(true)}
-                                    onBlur={() => setPasswordFocused(false)}
-                                    secureTextEntry={!showPassword}
-                                    style={[styles.input, styles.passwordInput]}
-                                    autoComplete="password"
-                                    editable={!loading}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowPassword(!showPassword)}
-                                    style={styles.eyeButton}
-                                    disabled={loading}
+                        {/* Form Card */}
+                        <View style={styles.formCard}>
+                            <Text style={styles.formTitle}>Iniciar Sesión</Text>
+                            <Text style={styles.formSubtitle}>
+                                Ingrese sus credenciales para acceder al sistema
+                            </Text>
+
+                            {/* Email Input */}
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Correo Electrónico</Text>
+                                <View
+                                    style={[
+                                        styles.inputContainer,
+                                        emailFocused && styles.inputFocused,
+                                        errors.email && styles.inputError,
+                                    ]}
                                 >
-                                    <Text style={styles.eyeText}>
-                                        {showPassword ? "Ocultar" : "Mostrar"}
-                                    </Text>
+                                    <TextInput
+                                        placeholder="usuario@empresa.com"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={email}
+                                        onChangeText={validateEmail}
+                                        onFocus={() => setEmailFocused(true)}
+                                        onBlur={() => setEmailFocused(false)}
+                                        style={styles.input}
+                                        autoCapitalize="none"
+                                        keyboardType="email-address"
+                                        autoComplete="email"
+                                        editable={!loading}
+                                    />
+                                </View>
+                                {errors.email ? (
+                                    <Text style={styles.errorText}>{errors.email}</Text>
+                                ) : null}
+                            </View>
+
+                            {/* Password Input */}
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Contraseña</Text>
+                                <View
+                                    style={[
+                                        styles.inputContainer,
+                                        passwordFocused && styles.inputFocused,
+                                    ]}
+                                >
+                                    <TextInput
+                                        placeholder="Ingrese su contraseña"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        onFocus={() => setPasswordFocused(true)}
+                                        onBlur={() => setPasswordFocused(false)}
+                                        secureTextEntry={!showPassword}
+                                        style={[styles.input, styles.passwordInput]}
+                                        autoComplete="password"
+                                        editable={!loading}
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowPassword(!showPassword)}
+                                        style={styles.eyeButton}
+                                        disabled={loading}
+                                    >
+                                        <Text style={styles.eyeText}>
+                                            {showPassword ? "Ocultar" : "Mostrar"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Login Button */}
+                            <TouchableOpacity
+                                onPress={handleLogin}
+                                disabled={loading || !!errors.email}
+                                style={[
+                                    styles.loginButton,
+                                    (loading || errors.email) && styles.loginButtonDisabled,
+                                ]}
+                                activeOpacity={0.7}
+                            >
+                                {loading ? (
+                                    <View style={styles.buttonContent}>
+                                        <ActivityIndicator color="#fff" size="small" />
+                                        <Text style={styles.loginButtonText}>Autenticando...</Text>
+                                    </View>
+                                ) : (
+                                    <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                                )}
+                            </TouchableOpacity>
+
+                            {/* Help Text */}
+                            <View style={styles.helpContainer}>
+                                <Text style={styles.helpText}>
+                                    ¿Problemas para acceder?{" "}
+                                </Text>
+                                <TouchableOpacity disabled={loading}>
+                                    <Text style={styles.helpLink}>Contactar soporte</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
 
-                        {/* Login Button */}
-                        <TouchableOpacity
-                            onPress={handleLogin}
-                            disabled={loading || !!errors.email}
-                            style={[
-                                styles.loginButton,
-                                (loading || errors.email) && styles.loginButtonDisabled,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            {loading ? (
-                                <View style={styles.buttonContent}>
-                                    <ActivityIndicator color="#fff" size="small" />
-                                    <Text style={styles.loginButtonText}>Autenticando...</Text>
-                                </View>
-                            ) : (
-                                <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        {/* Help Text */}
-                        <View style={styles.helpContainer}>
-                            <Text style={styles.helpText}>
-                                ¿Problemas para acceder?{" "}
+                        {/* Footer */}
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>
+                                © 2025 Pollos App. Todos los derechos reservados.
                             </Text>
-                            <TouchableOpacity disabled={loading}>
-                                <Text style={styles.helpLink}>Contactar soporte</Text>
-                            </TouchableOpacity>
+                            <Text style={styles.footerVersion}>Versión 1.0.0</Text>
                         </View>
                     </View>
-
-                    {/* Footer */}
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>
-                            © 2025 Pollos App. Todos los derechos reservados.
-                        </Text>
-                        <Text style={styles.footerVersion}>Versión 1.0.0</Text>
-                    </View>
-                </View>
+                </ScrollView>
             </KeyboardAvoidingView>
+            <ModalAlert
+                visible={modalVisible}
+                type={modalType}
+                title={modalType === "error" ? "Error" : "Aviso"}
+                message={modalMessage}
+                onClose={() => setModalVisible(false)}
+            />
         </>
     );
 }
