@@ -140,3 +140,74 @@ export const GetClientesByIdUsuario = async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+
+
+export const ObtenerComprasDeCliente = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "Se requiere el ID del cliente." });
+    }
+
+    //  Obtener  información de compras
+    const sqlCompras = `
+      SELECT 
+        v.id AS venta_id,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+
+        p.id AS producto_id,
+        p.nombre AS producto_nombre,
+        p.costo AS producto_costo,
+
+        l.id AS lote_id,
+        l.nombre AS lote_nombre,
+        l.precio AS lote_precio,
+
+        u.id AS usuario_id,
+        u.nombre AS usuario_nombre
+      FROM ventas v
+      LEFT JOIN productos p ON v.producto_id = p.id
+      LEFT JOIN lotes l ON v.lote_id = l.id
+      LEFT JOIN usuarios u ON v.usuario_id = u.id
+      WHERE v.cliente_id = ?
+      ORDER BY v.fecha DESC
+    `;
+
+    const [compras] = await pool.query(sqlCompras, [id]);
+
+    if (compras.length === 0) {
+      return res.status(200).json({
+        message: "El cliente no tiene compras registradas.",
+        total_gastado: 0,
+        cantidad_compras: 0,
+        compras: []
+      });
+    }
+
+
+    const totalGastado = compras.reduce((sum, compra) => {
+      return sum + Number(compra.valor_total);
+    }, 0);
+
+
+    const cantidadCompras = compras.length;
+
+    res.status(200).json({
+      message: "Historial de compras obtenido correctamente.",
+      total_gastado: totalGastado,
+      cantidad_compras: cantidadCompras,
+      compras: compras
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error del servidor.",
+      error: error.message
+    });
+  }
+};

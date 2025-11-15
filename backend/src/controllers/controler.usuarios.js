@@ -188,3 +188,106 @@ export const ActualizarUsuario = async (req, res) => {
   }
 };
 
+
+
+
+
+
+export const getUsuarioById = async (req, res) => {
+  const { id_usuario } = req.params;
+
+  try {
+    const sql = `
+      SELECT 
+        id, 
+        nombre, 
+        identificacion, 
+        telefono, 
+        correo, 
+        cargo, 
+        estado 
+      FROM usuarios 
+      WHERE id = ?
+    `;
+
+    const [result] = await pool.query(sql, [id_usuario]);
+
+    if (result.length > 0) {
+      res.status(200).json(result[0]);
+    } else {
+      res.status(404).json({ message: "Usuario no encontrado" });
+    }
+  } catch (error) {
+    console.error("Error al obtener el usuario:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+
+export const VentasPorUsuario = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "Se requiere ID del usuario." });
+    }
+
+    // Validar usuario existente
+    const [usuario] = await pool.query(
+      "SELECT id, nombre, correo FROM usuarios WHERE id = ?",
+      [id]
+    );
+
+    if (usuario.length === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    // Resumen de ventas del usuario
+    const [resumen] = await pool.query(`
+      SELECT 
+        COUNT(id) AS cantidad_ventas,
+        SUM(valor_total) AS total_generado
+      FROM ventas
+      WHERE usuario_id = ?
+    `, [id]);
+
+    // Detalle de ventas
+    const [ventas] = await pool.query(`
+      SELECT 
+        v.id AS venta_id,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+
+        p.id AS producto_id,
+        p.nombre AS producto_nombre,
+
+        c.id AS cliente_id,
+        c.nombre AS cliente_nombre
+      FROM ventas v
+      LEFT JOIN productos p ON v.producto_id = p.id
+      LEFT JOIN clientes c ON v.cliente_id = c.id
+      WHERE v.usuario_id = ?
+      ORDER BY v.fecha DESC
+    `, [id]);
+
+    res.status(200).json({
+      message: "Ventas del usuario obtenidas correctamente.",
+      usuario: usuario[0],
+      resumen: {
+        cantidad_ventas: resumen[0].cantidad_ventas || 0,
+        total_generado: resumen[0].total_generado || 0
+      },
+      ventas
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error al obtener ventas del usuario.",
+      error: error.message
+    });
+  }
+};
+

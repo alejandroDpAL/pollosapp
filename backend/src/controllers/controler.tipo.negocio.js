@@ -154,3 +154,87 @@ export const get_negocios_por_usuario = async (req, res) => {
     });
   }
 };
+
+
+export const InfoNegocio = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "Se requiere ID del negocio." });
+    }
+
+    // Info del negocio
+    const [negocio] = await pool.query(`
+      SELECT *
+      FROM negocio
+      WHERE id = ?
+    `, [id]);
+
+    if (negocio.length === 0) {
+      return res.status(404).json({ message: "Negocio no encontrado." });
+    }
+
+    // Productos del negocio
+    const [productos] = await pool.query(`
+      SELECT 
+        id, nombre, cantidad, costo, fecha_compra
+      FROM productos
+      WHERE negocio_id = ?
+    `, [id]);
+
+    // Lotes del negocio
+    const [lotes] = await pool.query(`
+      SELECT 
+        l.id,
+        l.nombre,
+        l.cantidad_inicial,
+        l.cantidad_actual,
+        l.precio,
+        l.fecha
+      FROM lotes l
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE p.negocio_id = ?
+    `, [id]);
+
+    // Total ventas del negocio
+    const [ventasTotal] = await pool.query(`
+      SELECT SUM(v.valor_total) AS total_ventas
+      FROM ventas v
+      INNER JOIN productos p ON v.producto_id = p.id
+      WHERE p.negocio_id = ?
+    `, [id]);
+
+    // Total costos del negocio
+    const [costosTotal] = await pool.query(`
+      SELECT SUM(c.valor) AS total_costos
+      FROM costos c
+      INNER JOIN lotes l ON c.lote_id = l.id
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE p.negocio_id = ?
+    `, [id]);
+
+    const totalVentas = ventasTotal[0].total_ventas || 0;
+    const totalCostos = costosTotal[0].total_costos || 0;
+    const ganancia = totalVentas - totalCostos;
+
+    res.status(200).json({
+      message: "Información del negocio obtenida correctamente.",
+      negocio: negocio[0],
+      resumen: {
+        total_ventas: totalVentas,
+        total_costos: totalCostos,
+        ganancia_neta: ganancia
+      },
+      productos,
+      lotes
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error al obtener la información del negocio.",
+      error: error.message
+    });
+  }
+};

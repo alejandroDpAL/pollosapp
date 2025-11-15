@@ -1,5 +1,5 @@
-import {View,Text,StyleSheet,TouchableOpacity,ScrollView,SafeAreaView,} from "react-native";
-import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, } from "react-native";
+import React, { use, useEffect, useState } from "react";
 import HeaderPrincipal from "../../components/layout/header";
 import Menu from "../../components/common/bottom.navigation";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -7,6 +7,7 @@ import { useNavigation, CommonActions } from "@react-navigation/native";
 import Modal from "../../components/common/Modal.componet";
 import ModalAlert from "../../components/common/Modal.Alet";
 import { useAuth } from "../../Hook/context/AuthContext";
+import { UserPerfil } from "../../Hook/Api/userApi";
 
 const Ajustes = () => {
   const navigation = useNavigation();
@@ -44,6 +45,24 @@ const Ajustes = () => {
     }
   };
 
+  const [profileData, setProfileData] = useState(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user || !user.id) return;
+
+    const GetDatosUser = async () => {
+      try {
+        const data = await UserPerfil(user.id);
+        setProfileData(data);
+      } catch (error) {
+        console.error("Error al cargar el perfil del usuario:", error);
+      }
+    };
+
+    GetDatosUser();
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderPrincipal title={"Ajustes"} />
@@ -54,20 +73,27 @@ const Ajustes = () => {
       >
         {/* Avatar */}
         <View style={styles.profileSection}>
-          <View style={styles.avatar}>
-            <Icon name="account" size={40} color={"black"} />
-          </View>
+          {profileData ? (
+            <>
+              <View style={styles.avatar}>
+                <Icon name="account" size={40} color={"black"} />
+              </View>
 
-          <Text style={styles.name}>Pablo</Text>
-          <Text style={styles.email}>pablo@gmail.com</Text>
+              <Text style={styles.name}>{profileData.nombre}</Text>
+              <Text style={styles.email}>{profileData.correo}</Text>
 
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => navigation.navigate("Perfil")}
-          >
-            <Text style={styles.editText}>Editar perfil</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate("Perfil")}
+              >
+                <Text style={styles.editText}>Editar perfil</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={{ color: "#888", marginTop: 20 }}>Cargando perfil...</Text>
+          )}
         </View>
+
 
         {/* Opciones */}
         <View style={styles.menuSection}>

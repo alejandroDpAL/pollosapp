@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 // Configuración
 const SALT_ROUNDS = 10;
-const LOGIN_DELAY_MS = 500; 
+const LOGIN_DELAY_MS = 500;
 
 export const AuthUserController = async (req, res) => {
     const { user, password } = req.body;
