@@ -42,7 +42,7 @@ export default function Perfil() {
                 setCorreo(data.correo || "");
             } catch (error) {
                 console.error("Error al cargar el perfil:", error);
-                Alert.alert("Error", "No se pudo cargar la información del perfil");
+                Alert.alert("Error", "No se pudo cargar la información contenida en el perfil");
             }
         };
         cargarPerfil();
