@@ -132,7 +132,7 @@ const Clients = () => {
 
       <ScrollView style={styles.container}>
         {clients.length === 0 ? (
-          <Text style={styles.emptyText}>No hay clientes registrados.</Text>
+          <Text style={styles.emptyText}>No hay clientes registrados para este usuario.</Text>
         ) : (
           clients.map((client) => (
             <View key={client.id} style={styles.card}>
