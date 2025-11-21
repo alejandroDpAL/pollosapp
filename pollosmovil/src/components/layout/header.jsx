@@ -17,6 +17,7 @@ const HeaderPrincipal = ({ title, showBack = false, onBack }) => {
 
       <View style={styles.logo}>
         <Icon name='account' size={25} color={'black'} />
+      
       </View>
     </View>
   );

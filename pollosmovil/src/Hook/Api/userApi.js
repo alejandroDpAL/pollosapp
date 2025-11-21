@@ -12,6 +12,18 @@ export const getUsers = async () => {
         throw error;
     }
 };
+// Obtener datos del perfil del usuario 
+export const getPerfilUsuario = async (id,userData) => {
+    try {
+        const response = await api.get(`/usuario/perfil/${id}`, userData);
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener usuarios:", error);
+        console.log(error);
+
+        throw error;
+    }
+};
 
 // Crear un nuevo usuario
 export const createUser = async (userData) => {

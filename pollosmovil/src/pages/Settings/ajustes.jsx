@@ -65,7 +65,10 @@ const Ajustes = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderPrincipal title={"Ajustes"} />
+      <HeaderPrincipal title={"Ajustes"} 
+/*       showBack={true} 
+      onBack={() => navigation.goBack()} */
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContainer}

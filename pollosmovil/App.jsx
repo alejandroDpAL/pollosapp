@@ -13,9 +13,19 @@ function AppContent() {
   const { isLoggedIn } = useAuth();
 
   return (
-    <NavigationContainer>
-      {!isLoggedIn ? <AuthNavigator /> : <AppNavigator />}
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+      <SafeAreaView style={{ flex: 1 }}>
+        <NavigationContainer>
+          {!isLoggedIn ? (
+            <AuthNavigator onLoginSuccess={() => setIsLoggedIn(true)} /> 
+          ) : ( 
+            <AppNavigator />
+          )}
+        </NavigationContainer>
+@
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

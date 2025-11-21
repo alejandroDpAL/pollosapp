@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -15,25 +15,58 @@ import HeaderPrincipal from '../../components/layout/header.jsx';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { getPerfilUsuario, updateUser } from "../../Hook/Api/userApi.js";
+import { useAuth } from "../../Hook/context/AuthContext.js"; 
 
 export default function Perfil() {
     const navigation = useNavigation();
 
     // Estados
+    const {user} = useAuth();
     const [imagen, setImagen] = useState(null);
     const [identificacion, setIdentificacion] = useState("");
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
-    const [contrasena, setContrasena] = useState("");
-    const [direccion, setDireccion] = useState("");
+    const [userId, setUserId] = useState([]); 
 
-    const actualizarPerfil = () => {
-        console.log({ identificacion, nombre, telefono, correo, contrasena, direccion });
-        alert("Perfil actualizado correctamente");
+    // 🔹 Obtener información del perfil
+    useEffect(() => {
+        if (!user?.id) return;
+        const cargarPerfil = async () => {
+            try {
+                const data = await getPerfilUsuario(user.id)
+                setIdentificacion(data.identificacion || "");
+                setNombre(data.nombre || "");
+                setTelefono(data.telefono || "");
+                setCorreo(data.correo || "");
+            } catch (error) {
+                console.error("Error al cargar el perfil:", error);
+                Alert.alert("Error", "No se pudo cargar la información contenida en el perfil");
+            }
+        };
+        cargarPerfil();
+    }, [userId]);
+
+    // 🔹 Actualizar perfil
+    const actualizarPerfil = async () => {
+        try {
+            const userData = {
+                identificacion,
+                nombre,
+                telefono,
+                correo
+            };
+
+            const response = await updateUser(user.id, userData);
+            Alert.alert("Éxito", response.message || "Perfil actualizado correctamente");
+        } catch (error) {
+            console.error("Error al actualizar el perfil:", error);
+            Alert.alert("Error", "No se pudo actualizar el perfil");
+        }
     };
 
-    // Seleccionar imagen (cámara o galería)
+    // 📸 Seleccionar imagen (cámara o galería)
     const seleccionarImagen = () => {
         Alert.alert(
             "Seleccionar imagen",
@@ -77,7 +110,6 @@ export default function Perfil() {
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
-
                     {/* Avatar */}
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatar}>
@@ -95,11 +127,9 @@ export default function Perfil() {
 
                     {/* Campos */}
                     <Campo label="Identificación" value={identificacion} onChange={setIdentificacion} placeholder="Ingrese su número de identificación" />
-                    <Campo label="Nombre" value={nombre} onChange={setNombre} placeholder="Ingrese su nombre" />
-                    <Campo label="Teléfono" value={telefono} onChange={setTelefono} placeholder="Ingrese su teléfono" keyboardType="phone-pad" />
-                    <Campo label="Correo" value={correo} onChange={setCorreo} placeholder="Ingrese su correo" keyboardType="email-address" />
-                    <Campo label="Contraseña" value={contrasena} onChange={setContrasena} placeholder="Ingrese su contraseña" secureTextEntry={true} />
-                    <Campo label="Dirección" value={direccion} onChange={setDireccion} placeholder="Ingrese su dirección" />
+                    <Campo label="Nombre" value={nombre} onChange={setNombre} placeholder="Nombre completo" />
+                    <Campo label="Teléfono" value={telefono} onChange={setTelefono} placeholder="Teléfono" keyboardType="phone-pad" />
+                    <Campo label="Correo" value={correo} onChange={setCorreo} placeholder="Correo electrónico" keyboardType="email-address" />
 
                     {/* Botón */}
                     <TouchableOpacity
@@ -117,7 +147,7 @@ export default function Perfil() {
     );
 }
 
-// Campo de texto reutilizable
+// 📦 Campo reutilizable
 const Campo = ({ label, value, onChange, placeholder, keyboardType, secureTextEntry }) => (
     <View style={styles.inputGroup}>
         <Text style={styles.label}>{label}</Text>
