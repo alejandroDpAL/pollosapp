@@ -241,14 +241,6 @@ export const ActualizarUsuario = async (req, res) => {
 
 
 
-
-
-//////////////////////////
-
-
-
-
-
 export const getUsuarioById = async (req, res) => {
   const { id_usuario } = req.params;
 

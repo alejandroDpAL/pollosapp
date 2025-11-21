@@ -1,4 +1,4 @@
-import express, { urlencoded } from 'express'; 
+import express, { urlencoded } from 'express';
 import body_parser from 'body-parser';
 import cors from 'cors';
 
@@ -20,11 +20,15 @@ const server = express();
 
 server.use(body_parser.json());
 server.use(body_parser.urlencoded({ extended: false }));
-server.use(cors());
+server.use(cors(
+    {
+        origin: '*'
+    }
+));
 
 /* rutas  */
 server.use('/usuario', routeUsers);
-server.use('/auth',authRouter)
+server.use('/auth', authRouter)
 server.use('/producto', routeProducts);
 server.use('/cliente', routeClientes);
 server.use('/ventas', routeVentas);

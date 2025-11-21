@@ -189,3 +189,127 @@ export const get_lotesByUsuario = async (req, res) => {
     });
   }
 };
+
+
+export const ObtenerDetalleLote = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "Se requiere el ID del lote." });
+    }
+
+    // Datos principales del lote + producto
+    const sqlLote = `
+      SELECT
+        l.id AS lote_id,
+        l.nombre AS lote_nombre,
+        l.cantidad_inicial,
+        l.cantidad_actual,
+        l.precio,
+        l.fecha,
+        l.descripcion,
+
+        p.id AS producto_id,
+        p.nombre AS producto_nombre,
+        p.cantidad AS producto_stock_total,
+        p.costo AS producto_costo
+      FROM lotes l
+      LEFT JOIN productos p ON l.producto_id = p.id
+      WHERE l.id = ?
+    `;
+
+    const [lote] = await pool.query(sqlLote, [id]);
+
+    if (lote.length === 0) {
+      return res.status(404).json({ message: "Lote no encontrado." });
+    }
+
+    const loteData = lote[0];
+
+    // Pérdidas asociadas
+    const sqlPerdidas = `
+      SELECT id, cantidad, motivo, descripcion, fecha_perdida
+      FROM perdidas
+      WHERE lote_id = ?
+    `;
+    const [perdidas] = await pool.query(sqlPerdidas, [id]);
+
+    // 3. Costos asociados
+    const sqlCostos = `
+      SELECT id, nombre, valor, fecha_compra, observaciones
+      FROM costos
+      WHERE lote_id = ?
+      ORDER BY fecha_compra DESC
+    `;
+    const [costos] = await pool.query(sqlCostos, [id]);
+
+    //  Ventas asociadas
+    const sqlVentas = `
+      SELECT
+        v.id AS venta_id,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+
+        c.id AS cliente_id,
+        c.nombre AS cliente_nombre
+      FROM ventas v
+      LEFT JOIN clientes c ON v.cliente_id = c.id
+      WHERE v.lote_id = ?
+      ORDER BY v.fecha DESC
+    `;
+    const [ventas] = await pool.query(sqlVentas, [id]);
+
+    res.status(200).json({
+      message: "Detalle del lote obtenido correctamente.",
+      lote: loteData,
+      perdidas,
+      costos,
+      ventas
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error del servidor.",
+      error: error.message
+    });
+  }
+};
+
+export const ObtenerStockGeneral = async (req, res) => {
+  try {
+    const sql = `
+      SELECT
+        l.id AS lote_id,
+        l.nombre AS lote_nombre,
+        l.cantidad_inicial,
+        l.cantidad_actual,
+        l.precio,
+        l.fecha,
+
+        p.id AS producto_id,
+        p.nombre AS producto_nombre
+      FROM lotes l
+      LEFT JOIN productos p ON l.producto_id = p.id
+      ORDER BY l.fecha DESC
+    `;
+
+    const [result] = await pool.query(sql);
+
+    res.status(200).json({
+      message: "Stock general obtenido correctamente.",
+      total_lotes: result.length,
+      data: result
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error del servidor.",
+      error: error.message
+    });
+  }
+};

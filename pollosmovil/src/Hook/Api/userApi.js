@@ -57,3 +57,15 @@ export const deleteUser = async (id) => {
         throw error;
     }
 };
+
+
+
+export const UserPerfil = async (id) => {
+    try {
+        const response = await api.get(`/usuario/perfil/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener el perfil del usuario:", error);
+        throw error;
+    }
+};
