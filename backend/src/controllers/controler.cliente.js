@@ -21,71 +21,79 @@ export const listarClientes = async (req, res) => {
 };
 
 export const CrearClientes = async (req, res) => {
-  const { usuario_id, nombre, telefono, correo, direccion, estado } = req.body;
+  // obtenemos los datos enviados desde el frontend
+  const { usuarioId, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
-    let sql = `
-      INSERT INTO clientes (usuario_id, nombre, telefono, correo, direccion, estado) 
+    const sql = `
+      INSERT INTO clientes (usuario_id, nombre, telefono, correo, direccion, estado)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     const [rows] = await pool.query(sql, [
-      usuario_id || null,
+      usuarioId || null,
       nombre,
       telefono || null,
       correo || null,
       direccion || null,
-      estado ?? 1  // si no envías estado, se guarda como 1 (activo)
+      estado ?? 1, // si no se envía, se guarda como activo (1)
     ]);
 
     if (rows.affectedRows > 0) {
       res.status(200).json({
         message: "Cliente registrado con éxito.",
-        id: rows.insertId
+        id: rows.insertId,
       });
     } else {
       res.status(403).json({
-        message: "No se logró registrar el cliente, intente nuevamente."
+        message: "No se logró registrar el cliente, intente nuevamente.",
       });
     }
   } catch (error) {
     console.error("Error al registrar cliente:", error);
     res.status(500).json({
       message: "Error en el servidor.",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 
+
 export const ActualizarCliente = async (req, res) => {
   const { id } = req.params;
-  const { usuario_id, nombre, telefono, correo, direccion, estado, fecha } = req.body;
+  let { usuario_id, nombre, telefono, correo, direccion, estado, fecha } = req.body;
 
   try {
-    const sql = `
-      UPDATE clientes
-      SET usuario_id = ?, nombre = ?, telefono = ?, correo = ?, direccion = ?, estado = ?, fecha = ?
-      WHERE id = ?
-    `;
+    // Si viene fecha, la convertimos al formato MySQL
+    if (fecha) {
+      const date = new Date(fecha);
+      fecha = date.toISOString().slice(0, 19).replace('T', ' '); 
+    }
 
-    const [result] = await pool.query(sql, [
-      usuario_id,
-      nombre,
-      telefono,
-      correo,
-      direccion,
-      estado,
-      fecha,
-      id,
-    ]);
+    let sql = `
+      UPDATE clientes
+      SET usuario_id = ?, nombre = ?, telefono = ?, correo = ?, direccion = ?, estado = ?
+    `;
+    const params = [usuario_id, nombre, telefono, correo, direccion, estado];
+
+    if (fecha) {
+      sql += `, fecha = ?`;
+      params.push(fecha);
+    }
+
+    sql += ` WHERE id = ?`;
+    params.push(id);
+
+    const [result] = await pool.query(sql, params);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: "Cliente actualizado con éxito." });
+      res.status(200).json({ success: true, message: "Cliente actualizado con éxito." });
     } else {
-      res.status(404).json({ message: "No se encontró el cliente para actualizar." });
+      res.status(404).json({ success: false, message: "No se encontró el cliente para actualizar." });
     }
   } catch (error) {
+    console.error("❌ Error en ActualizarCliente:", error);
     res.status(500).json({
       message: "Error al conectarse con el servidor: " + error.message,
     });
@@ -93,13 +101,15 @@ export const ActualizarCliente = async (req, res) => {
 };
 
 
+
+
 export const EliminarCliente = async (req, res) => {
   try {
-    const { id_cliente } = req.params;
+    const { id } = req.params;
 
-    let sql = "DELETE FROM clientes WHERE id_cliente = ?";
+    let sql = "DELETE FROM clientes WHERE id = ?";
 
-    const [result] = await pool.query(sql, [id_cliente]);
+    const [result] = await pool.query(sql, [id]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({

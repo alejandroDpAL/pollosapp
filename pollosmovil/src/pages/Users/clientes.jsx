@@ -10,6 +10,7 @@ import {
   getClientById,
 } from "../../Hook/Api/clientApi";
 import { useAuth } from "../../Hook/context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
@@ -69,21 +70,28 @@ const Clients = () => {
     }
 
     try {
+
+      let message = "";
+
       if (isEditing && selectedClient) {
         await updateClient(selectedClient.id, formData);
+        message = "Cliente actualizado con exito ✅"
       } else {
         await createClient({ ...formData, usuarioId: user.id });
+        message = "Cliente registrado con exito ✅"
       }
+
 
       // Recargar la lista actualizada
       const updatedClients = await getClientById(user.id);
       setClients(Array.isArray(updatedClients) ? updatedClients : []);
-
       setModalVisible(false);
       resetForm();
-    } catch (err) {
-      console.error("Error al guardar el cliente:", err);
-      Alert.alert("Error", "No se pudo guardar el cliente. Intenta nuevamente.");
+      Alert.alert("Éxito", message)
+
+    } catch (error) {
+      console.error("Error al guardar el cliente:", error);
+      Alert.alert("Error", "No se pudo actualizar el cliente. Intenta nuevamente.");
     }
   };
 
@@ -116,22 +124,26 @@ const Clients = () => {
     ]);
   };
 
+  const navigation = useNavigation()
+
   return (
     <>
       <HeaderPrincipal title="Gestión de Clientes" />
 
       <ScrollView style={styles.container}>
         {clients.length === 0 ? (
-          <Text style={styles.emptyText}>No hay clientes registrados.</Text>
+          <Text style={styles.emptyText}>No hay clientes registrados para este usuario.</Text>
         ) : (
           clients.map((client) => (
             <View key={client.id} style={styles.card}>
-              <Image
+              <TouchableOpacity onPress={() => navigation.navigate("infoclient",{client})}>              
+                <Image
                 source={{
                   uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
                 }}
                 style={styles.avatar}
-              />
+              /></TouchableOpacity>
+
               <View style={styles.info}>
                 <Text style={styles.name}>{client.nombre}</Text>
                 <Text style={styles.email}>{client.correo || "Sin correo"}</Text>
@@ -145,7 +157,7 @@ const Clients = () => {
                   <Icon name="pencil" size={22} color="#007bff" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteClient(client)}>
-                  <Icon name="delete" size={22} color="#d9534f" />
+                  <Icon name="delete" size={22} color="#ff0f07ff" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -165,7 +177,7 @@ const Clients = () => {
             <View style={styles.form}>
               <TextInput
                 style={styles.input}
-                placeholder="Nombre"
+                placeholder="Nombre Cliente"
                 value={formData.nombre}
                 onChangeText={(text) => handleInputChange("nombre", text)}
               />
@@ -228,7 +240,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
     elevation: 4,
-    borderLeftWidth: 4,
+    borderLeftWidth: 4, 
     borderLeftColor: "#0077cc",
   },
   avatar: {

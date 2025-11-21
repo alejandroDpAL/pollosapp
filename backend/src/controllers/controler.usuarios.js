@@ -20,13 +20,60 @@ export const listarUsuarios = async (req, res) => {
   }
 };
 
+// Obtener perfil de un usuario por ID
+export const PerfilUsuario = async (req, res) => {
+  const { id_usuario } = req.params;
+
+  try {
+    // Validar ID
+    if (!id_usuario || isNaN(Number(id_usuario))) {
+      return res.status(400).json({
+        message: "El ID del usuario es requerido y debe ser un número válido.",
+      });
+    }
+
+    // Consultar datos del usuario
+    const sql = `
+      SELECT 
+        id, 
+        nombre, 
+        identificacion, 
+        telefono, 
+        correo, 
+        cargo, 
+        estado
+      FROM usuarios 
+      WHERE id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [id_usuario]);
+
+    // Validar existencia
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "No se encontró el usuario solicitado.",
+      });
+    }
+
+    // Retornar datos
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("Error al obtener perfil del usuario:", error);
+    res.status(500).json({
+      message: "Error interno del servidor al obtener el perfil.",
+      error: error.message,
+    });
+  }
+};
+
+
 export const CrearUsuarios = async (req, res) => {
   const { nombre, identificacion, telefono, correo, password, cargo, estado } = req.body;
   const saltRounds = 10; // nivel de seguridad para hash bcrypt
 
   try {
     // 1️ Validar campos obligatorios
-    if (!nombre?.trim() || !identificacion?.trim() || !correo?.trim() || !password?.trim()) {
+    if (!nombre?.trim() || !identificacion == null || isNaN(Number(identificacion)) || !correo?.trim() || !password?.trim()) {
       return res.status(400).json({
         message: "Los campos 'nombre', 'identificación', 'correo' y 'password' son obligatorios.",
       });
@@ -59,7 +106,7 @@ export const CrearUsuarios = async (req, res) => {
 
     const [result] = await pool.query(sql, [
       nombre.trim(),
-      identificacion.trim(),
+      identificacion,
       telefono?.trim() || null,
       correo.trim().toLowerCase(),
       hashedPassword,
@@ -79,7 +126,7 @@ export const CrearUsuarios = async (req, res) => {
   } catch (error) {
     console.error("Error al crear usuario:", error);
     return res.status(500).json({
-      message: "Error interno del servidor.",
+      message: "Error interno del servidor."+ error,
     });
   }
 };
@@ -187,4 +234,7 @@ export const ActualizarUsuario = async (req, res) => {
     });
   }
 };
+
+
+
 

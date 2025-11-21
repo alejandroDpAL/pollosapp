@@ -14,9 +14,9 @@ export const getClients = async () => {
 };
 
 
-export const getClientById = async (id) => {
+export const getClientById = async (clientId) => {
   try {
-    const response = await api.get(`/cliente/ClienteUsuario/${id}`);
+    const response = await api.get(`/cliente/ClienteUsuario/${clientId}`);
     return response.data;
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
@@ -27,10 +27,21 @@ export const getClientById = async (id) => {
 };
 
 
+export const getVentasByCliente = async (clienteId) => {
+  try {
+    const response = await api.get(`/ventas/cliente/${clienteId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener ventas del cliente:", error);
+    return [];
+  }
+};
+
+
 // Create a new client
 export const createClient = async (clientData) => {
   try {
-    const response = await api.post("/cliente/crear", clientData);
+    const response = await api.post(`/cliente/registrar`, clientData);
     return response.data;
   } catch (error) {
     console.error("Error creating client:", error);
@@ -42,12 +53,15 @@ export const createClient = async (clientData) => {
 export const updateClient = async (id, clientData) => {
   try {
     const response = await api.put(`/cliente/actualizar/${id}`, clientData);
-    return response.data;
+
+    // Si el backend no devuelve data, devolvemos un mensaje genérico
+    return response?.data || { message: "Cliente actualizado (sin respuesta del servidor)." };
   } catch (error) {
-    console.error("Error updating client:", error);
-    throw error;
+    console.error("Error updating client:", error.response?.data || error.message);
+    throw error.response?.data || { message: "Error al actualizar cliente." };
   }
 };
+
 
 // Delete client
 export const deleteClient = async (id) => {
