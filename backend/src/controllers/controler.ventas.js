@@ -58,7 +58,8 @@ export const listarVentasPorUsuario = async (req, res) => {
         v.precio_unitario,
         v.valor_total,
         v.fecha,
-        v.observaciones
+        v.observaciones,
+        v.estado
       FROM ventas v
       INNER JOIN usuarios u ON v.usuario_id = u.id
       INNER JOIN clientes c ON v.cliente_id = c.id
@@ -619,3 +620,116 @@ export const ObtenerVentasDeProducto = async (req, res) => {
     });
   }
 };
+
+
+export const listarVentasPorClienteNuevoEnpoint = async (req, res) => {
+  const { cliente_id } = req.params;
+
+  try {
+    if (!cliente_id) {
+      return res.status(400).json({
+        message: "El ID del cliente es obligatorio."
+      });
+    }
+
+    const sql = `
+      SELECT 
+        -- Datos del cliente
+        c.id AS cliente_id,
+        c.nombre AS cliente_nombre,
+        c.telefono AS cliente_telefono,
+        c.correo AS cliente_correo,
+        c.direccion AS cliente_direccion,
+
+        -- Datos del vendedor (usuario)
+        u.id AS usuario_id,
+        u.nombre AS usuario_nombre,
+
+        -- Datos del lote
+        l.id AS lote_id,
+        l.nombre AS lote_nombre,
+        l.precio AS lote_precio,
+
+        -- Datos del producto
+        p.id AS producto_id,
+        p.nombre AS producto_nombre,
+        p.costo AS producto_costo,
+
+        -- Datos de la venta
+        v.id AS venta_id,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+        v.observaciones
+      FROM ventas v
+      INNER JOIN clientes c ON v.cliente_id = c.id
+      INNER JOIN usuarios u ON v.usuario_id = u.id
+      INNER JOIN lotes l ON v.lote_id = l.id
+      LEFT JOIN productos p ON v.producto_id = p.id
+      WHERE v.cliente_id = ?
+      ORDER BY v.fecha DESC;
+    `;
+
+    const [rows] = await pool.query(sql, [cliente_id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Este cliente no tiene ventas registradas."
+      });
+    }
+
+    // Datos del cliente
+    const cliente = {
+      id: rows[0].cliente_id,
+      nombre: rows[0].cliente_nombre,
+      telefono: rows[0].cliente_telefono,
+      correo: rows[0].cliente_correo,
+      direccion: rows[0].cliente_direccion
+    };
+
+    // Datos del vendedor
+    const vendedor = {
+      id: rows[0].usuario_id,
+      nombre: rows[0].usuario_nombre
+    };
+
+    // Ventas
+    const ventas = rows.map(item => ({
+      venta_id: item.venta_id,
+      cantidad: item.cantidad,
+      precio_unitario: item.precio_unitario,
+      valor_total: item.valor_total,
+      fecha: item.fecha,
+      observaciones: item.observaciones,
+
+      lote: {
+        id: item.lote_id,
+        nombre: item.lote_nombre,
+        precio: item.lote_precio
+      },
+
+      producto: {
+        id: item.producto_id,
+        nombre: item.producto_nombre,
+        costo: item.producto_costo
+      }
+    }));
+
+    return res.status(200).json({
+      message: "Historial de ventas obtenido correctamente.",
+      cliente,
+      vendedor,
+      total_ventas: ventas.length,
+      ventas
+    });
+
+  } catch (error) {
+    console.error("Error al listar ventas por cliente:", error);
+    return res.status(500).json({
+      message: "Error en el servidor: " + error.message
+    });
+  }
+};
+
+

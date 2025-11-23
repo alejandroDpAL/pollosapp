@@ -29,7 +29,8 @@ export const getClientById = async (clientId) => {
 
 export const getVentasByCliente = async (clienteId) => {
   try {
-    const response = await api.get(`/ventas/cliente/${clienteId}`);
+    // const response = await api.get(`/ventas/cliente/${clienteId}`);
+    const response = await api.get(`/ventas/clientes/${clienteId}/ventas`);
     return response.data;
   } catch (error) {
     console.error("Error al obtener ventas del cliente:", error);

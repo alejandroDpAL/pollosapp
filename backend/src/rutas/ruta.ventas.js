@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { ActualizarVentas, CrearVentaConproducto, CrearVentas, EliminarVentas, get_negocios_por_usuario, listarVentas, listarVentasPorCliente, listarVentasPorUsuario, ObtenerDetalleVenta, ObtenerVentasDeProducto } from "../controllers/controler.ventas.js";
+import { ActualizarVentas, CrearVentaConproducto, CrearVentas, EliminarVentas, get_negocios_por_usuario, listarVentas, listarVentasPorCliente, listarVentasPorClienteNuevoEnpoint, listarVentasPorUsuario, ObtenerDetalleVenta, ObtenerVentasDeProducto } from "../controllers/controler.ventas.js";
 const routeVentas = Router()
 
 routeVentas.get('/listar',listarVentas)
@@ -13,5 +13,8 @@ routeVentas.get("/negocios/usuario/:usuario_id", get_negocios_por_usuario);
 routeVentas.post("/ventas/registrada", CrearVentaConproducto);
 routeVentas.get("/detalle/:id", ObtenerDetalleVenta);
 routeVentas.get("/productos/:id/ventas", ObtenerVentasDeProducto);
+// Nuevo endpoint: ventas completas del cliente (cliente + vendedor + productos + lotes)
+routeVentas.get('/clientes/:cliente_id/ventas', listarVentasPorClienteNuevoEnpoint);
+
 
 export default routeVentas
