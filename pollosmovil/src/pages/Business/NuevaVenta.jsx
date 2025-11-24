@@ -14,7 +14,7 @@ const NuevaVenta = ({ visible, onClose }) => {
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-    };
+    };  
 
     const resetForm = () => {
         setFormData({
