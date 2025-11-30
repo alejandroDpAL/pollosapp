@@ -192,10 +192,10 @@ export const update_reporte_lote = async (req, res) => {
 
 
 export const get_reportes_lote_por_usuario = async (req, res) => {
-  const { usuario_id } = req.params;
+  const { id } = req.params;
 
   try {
-    if (!usuario_id) {
+    if (!id) {
       return res.status(400).json({
         message: "El ID del usuario es obligatorio.",
       });
@@ -206,10 +206,10 @@ export const get_reportes_lote_por_usuario = async (req, res) => {
       SELECT rl.*
       FROM reportes_lote rl
       INNER JOIN lotes l ON rl.lote_id = l.id
-      WHERE l.usuario_id = ?
+      WHERE l.id = ?
     `;
 
-    const [rows] = await pool.query(sql, [usuario_id]);
+    const [rows] = await pool.query(sql, [id]);
 
     if (rows.length > 0) {
       return res.status(200).json(rows);
@@ -230,19 +230,35 @@ export const get_reportes_lote_por_usuario = async (req, res) => {
 
 export const ReporteGeneralNegocio = async (req, res) => {
   try {
-    // Total ventas
+    const { id } = req.params;
+
     const [ventasTotal] = await pool.query(`
-      SELECT SUM(valor_total) AS total_ventas
-      FROM ventas
-    `);
+      SELECT SUM(v.valor_total) AS total_ventas
+      FROM ventas v
+      INNER JOIN lotes l ON v.lote_id = l.id
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE p.negocio_id = ?
+    `, [id]);
 
-    //  Total costos
+
     const [costosTotal] = await pool.query(`
-      SELECT SUM(valor) AS total_costos
-      FROM costos
-    `);
+      SELECT SUM(c.valor) AS total_costos
+      FROM costos c
+      INNER JOIN lotes l ON c.lote_id = l.id
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE p.negocio_id = ?
+    `, [id]);
 
-    //  Productos más vendidos
+
+    const [perdidasTotal] = await pool.query(`
+      SELECT SUM(p.cantidad) AS total_perdidas
+      FROM perdidas p
+      INNER JOIN lotes l ON p.lote_id = l.id
+      INNER JOIN productos pr ON l.producto_id = pr.id
+      WHERE pr.negocio_id = ?
+    `, [id]);
+
+
     const [productosMasVendidos] = await pool.query(`
       SELECT 
         p.id,
@@ -251,12 +267,12 @@ export const ReporteGeneralNegocio = async (req, res) => {
         SUM(v.valor_total) AS ingresos_generados
       FROM ventas v
       INNER JOIN productos p ON v.producto_id = p.id
+      WHERE p.negocio_id = ?
       GROUP BY p.id
       ORDER BY cantidad_vendida DESC
       LIMIT 10
-    `);
+    `, [id]);
 
-    //  Clientes más frecuentes
     const [clientesFrecuentes] = await pool.query(`
       SELECT 
         c.id,
@@ -265,22 +281,28 @@ export const ReporteGeneralNegocio = async (req, res) => {
         SUM(v.valor_total) AS total_gastado
       FROM ventas v
       LEFT JOIN clientes c ON v.cliente_id = c.id
-      WHERE c.id IS NOT NULL
+      INNER JOIN lotes l ON v.lote_id = l.id
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE c.id IS NOT NULL AND p.negocio_id = ?
       GROUP BY c.id
       ORDER BY cantidad_compras DESC
       LIMIT 10
-    `);
+    `, [id]);
 
     const totalVentas = ventasTotal[0].total_ventas || 0;
     const totalCostos = costosTotal[0].total_costos || 0;
-    const ganancia = totalVentas - totalCostos;
+    const totalPerdidas = perdidasTotal[0].total_perdidas || 0;
+
+    // Ganancia real del negocio
+    const gananciaNeta = totalVentas - totalCostos;
 
     res.status(200).json({
       message: "Reporte general del negocio generado correctamente.",
       resumen: {
         total_ventas: totalVentas,
         total_costos: totalCostos,
-        ganancia_neta: ganancia
+        total_perdidas: totalPerdidas,
+        ganancia_neta: gananciaNeta
       },
       productos_mas_vendidos: productosMasVendidos,
       clientes_mas_frecuentes: clientesFrecuentes
@@ -296,18 +318,24 @@ export const ReporteGeneralNegocio = async (req, res) => {
 };
 
 
+
+
 export const ReportePorLote = async (req, res) => {
-  const { id } = req.params;
+  const { id_lote, id_usuario } = req.params;
 
   try {
-    if (!id) {
+    if (!id_lote) {
       return res.status(400).json({ message: "Se requiere ID del lote." });
     }
+    if (!id_usuario) {
+      return res.status(400).json({ message: "Se requiere ID del usuario." });
+    }
 
-    // Obtener datos del reporte almacenado
     const sql = `
       SELECT
+        id,
         lote_id,
+        usuario_id,
         cantidad_inicial,
         cantidad_vendida,
         cantidad_perdida,
@@ -318,13 +346,13 @@ export const ReportePorLote = async (req, res) => {
         porcentaje_mortalidad,
         fecha_generacion
       FROM reportes_lote
-      WHERE lote_id = ?
+      WHERE lote_id = ? AND usuario_id = ?
     `;
 
-    const [result] = await pool.query(sql, [id]);
+    const [result] = await pool.query(sql, [id_lote, id_usuario]);
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "No existe reporte para este lote." });
+      return res.status(404).json({ message: "No existe reporte para este lote o usuario." });
     }
 
     res.status(200).json({
@@ -340,3 +368,4 @@ export const ReportePorLote = async (req, res) => {
     });
   }
 };
+

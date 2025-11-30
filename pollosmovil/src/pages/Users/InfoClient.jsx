@@ -51,7 +51,7 @@ const InfoClient = ({ route }) => {
         </View>
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${parseFloat(item.valor_total).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+          <Text style={styles.totalValue}>${parseFloat(item.valor_total).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
         </View>
       </View>
 
@@ -69,7 +69,7 @@ const InfoClient = ({ route }) => {
           <View style={styles.detailDivider} />
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Precio Unitario</Text>
-            <Text style={styles.detailValue}>${parseFloat(item.precio_unitario).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            <Text style={styles.detailValue}>${parseFloat(item.precio_unitario).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
           </View>
         </View>
       </View>
@@ -191,9 +191,9 @@ const InfoClient = ({ route }) => {
                 <Icon name="currency-usd" size={22} color="#2D5F3F" />
               </View>
               <Text style={styles.statValue}>
-                ${totalMonetario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${totalMonetario.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Text>
-              <Text style={styles.statLabel}>Monto Total</Text>
+              <Text style={styles.statLabel}>Total</Text>
             </View>
           </View>
         </View>

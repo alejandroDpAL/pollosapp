@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator, Modal, Alert, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HeaderPrincipal from '../../components/layout/header.jsx';
 import Menu from '../../components/common/bottom.navigation.jsx';
 import Boton from '../../components/common/bottom.plus.jsx';
+import DraggableModal from "../../components/common/DraggableModal";
 import { getVentasAdmin } from '../../Hook/Api/VentasApi.js';
 import { useAuth } from "../../Hook/context/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 const TAB_WIDTH = 120;
-const tabs = ["todas", "pendiente", "realizada", "pagado", "parcial", "anulado"];
-const estadosDisponibles = ["pendiente", "realizada", "pagado", "parcial", "anulado"];
+const tabs = ["todas", "pendiente", "pagado", "anulado"];
+const estadosDisponibles = ["pendiente", "pagado", "anulado"];
 
 const Business = ({ navigation }) => {
   const { user } = useAuth();
@@ -23,8 +24,6 @@ const Business = ({ navigation }) => {
   const indicator = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
   const tabRefs = useRef({});
-  const modalHeight = useRef(new Animated.Value(height * 0.6)).current;
-  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     cargarVentas();
@@ -128,11 +127,6 @@ const Business = ({ navigation }) => {
   const handleVerDetalle = (venta) => {
     setVentaSeleccionada(venta);
     setModalVisible(true);
-    // Reiniciar altura del modal
-    Animated.spring(modalHeight, {
-      toValue: height * 0.6,
-      useNativeDriver: false,
-    }).start();
   };
 
   const handleCambiarEstado = async (nuevoEstado) => {
@@ -180,50 +174,6 @@ const Business = ({ navigation }) => {
       ]
     );
   };
-
-  // PanResponder para manejar el drag del modal
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: () => {
-        setIsDragging(true);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const newHeight = height * 0.6 - gestureState.dy;
-        if (newHeight >= height * 0.3 && newHeight <= height * 0.95) {
-          modalHeight.setValue(newHeight);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        setIsDragging(false);
-
-        // Si arrastra hacia abajo más de 100px, cerrar modal
-        if (gestureState.dy > 100) {
-          Animated.timing(modalHeight, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: false,
-          }).start(() => {
-            setModalVisible(false);
-          });
-        } else {
-          // Snap a altura mínima o máxima más cercana
-          const currentHeight = height * 0.6 - gestureState.dy;
-          const targetHeight = currentHeight > height * 0.625 ? height * 0.95 : height * 0.6;
-
-          Animated.spring(modalHeight, {
-            toValue: targetHeight,
-            useNativeDriver: false,
-            tension: 50,
-            friction: 7,
-          }).start();
-        }
-      },
-    })
-  ).current;
 
   return (
     <View style={styles.container}>
@@ -345,125 +295,108 @@ const Business = ({ navigation }) => {
 
       <Boton />
 
-      {/* Modal de Detalles */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      {/* Modal de Detalles con DraggableModal */}
+      <DraggableModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        title="Detalle de Venta"
+        initialHeight={0.6}
+        minHeight={0.3}
+        maxHeight={0.95}
       >
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.modalContent, { height: modalHeight }]}>
-            {/* Drag Handle */}
-            <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
-              <View style={styles.dragHandle} />
+        {ventaSeleccionada && (
+          <>
+            {/* Estado actual */}
+            <View style={[styles.estadoCard, { backgroundColor: getEstadoBackground(ventaSeleccionada.estado) }]}>
+              <Icon
+                name={getEstadoIcon(ventaSeleccionada.estado).name}
+                size={28}
+                color={getEstadoIcon(ventaSeleccionada.estado).color}
+              />
+              <View style={styles.estadoCardInfo}>
+                <Text style={styles.estadoCardLabel}>Estado actual</Text>
+                <Text style={[styles.estadoCardText, { color: getEstadoIcon(ventaSeleccionada.estado).color }]}>
+                  {ventaSeleccionada.estado.toUpperCase()}
+                </Text>
+              </View>
             </View>
 
-            {/* Header del modal */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Detalle de Venta</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Icon name="close" size={24} color="#6b7280" />
+            {/* Información del cliente */}
+            <View style={styles.modalSection}>
+              <View style={styles.modalInfoRow}>
+                <Icon name="account" size={20} color="#6b7280" />
+                <View style={styles.modalInfoContent}>
+                  <Text style={styles.modalLabel}>Cliente</Text>
+                  <Text style={styles.modalValue}>{ventaSeleccionada.cliente}</Text>
+                </View>
+              </View>
+
+              <View style={styles.modalInfoRow}>
+                <Icon name="calendar" size={20} color="#6b7280" />
+                <View style={styles.modalInfoContent}>
+                  <Text style={styles.modalLabel}>Fecha</Text>
+                  <Text style={styles.modalValue}>{ventaSeleccionada.fecha}</Text>
+                </View>
+              </View>
+
+              <View style={styles.modalInfoRow}>
+                <Icon name="package-variant" size={20} color="#6b7280" />
+                <View style={styles.modalInfoContent}>
+                  <Text style={styles.modalLabel}>Producto</Text>
+                  <Text style={styles.modalValue}>{ventaSeleccionada.producto}</Text>
+                </View>
+              </View>
+
+              <View style={styles.modalInfoRow}>
+                <Icon name="numeric" size={20} color="#6b7280" />
+                <View style={styles.modalInfoContent}>
+                  <Text style={styles.modalLabel}>Cantidad</Text>
+                  <Text style={styles.modalValue}>{ventaSeleccionada.cantidad}</Text>
+                </View>
+              </View>
+
+              <View style={styles.modalInfoRow}>
+                <Icon name="cash-multiple" size={20} color="#0077cc" />
+                <View style={styles.modalInfoContent}>
+                  <Text style={styles.modalLabel}>Valor Total</Text>
+                  <Text style={styles.modalValueDestacado}>
+                    $ {ventaSeleccionada.valor.toLocaleString('es-CO')}
+                  </Text>
+                </View>
+              </View>
+
+              {ventaSeleccionada.observaciones && (
+                <View style={styles.observacionesContainer}>
+                  <Icon name="note-text" size={20} color="#6b7280" />
+                  <View style={styles.modalInfoContent}>
+                    <Text style={styles.modalLabel}>Observaciones</Text>
+                    <Text style={styles.observacionesModal}>{ventaSeleccionada.observaciones}</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Botones de acción */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.btnCambiarEstado}
+                onPress={() => setModalEstadoVisible(true)}
+              >
+                <Icon name="swap-horizontal" size={20} color="#fff" />
+                <Text style={styles.btnText}>Cambiar Estado</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.btnEliminar}
+                onPress={handleEliminar}
+              >
+                <Icon name="delete" size={20} color="#fff" />
+                <Text style={styles.btnText}>Eliminar</Text>
               </TouchableOpacity>
             </View>
-
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {ventaSeleccionada && (
-                <>
-                  {/* Estado actual */}
-                  <View style={[styles.estadoCard, { backgroundColor: getEstadoBackground(ventaSeleccionada.estado) }]}>
-                    <Icon
-                      name={getEstadoIcon(ventaSeleccionada.estado).name}
-                      size={28}
-                      color={getEstadoIcon(ventaSeleccionada.estado).color}
-                    />
-                    <View style={styles.estadoCardInfo}>
-                      <Text style={styles.estadoCardLabel}>Estado actual</Text>
-                      <Text style={[styles.estadoCardText, { color: getEstadoIcon(ventaSeleccionada.estado).color }]}>
-                        {ventaSeleccionada.estado.toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Información del cliente */}
-                  <View style={styles.modalSection}>
-                    <View style={styles.modalInfoRow}>
-                      <Icon name="account" size={20} color="#6b7280" />
-                      <View style={styles.modalInfoContent}>
-                        <Text style={styles.modalLabel}>Cliente</Text>
-                        <Text style={styles.modalValue}>{ventaSeleccionada.cliente}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.modalInfoRow}>
-                      <Icon name="calendar" size={20} color="#6b7280" />
-                      <View style={styles.modalInfoContent}>
-                        <Text style={styles.modalLabel}>Fecha</Text>
-                        <Text style={styles.modalValue}>{ventaSeleccionada.fecha}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.modalInfoRow}>
-                      <Icon name="package-variant" size={20} color="#6b7280" />
-                      <View style={styles.modalInfoContent}>
-                        <Text style={styles.modalLabel}>Producto</Text>
-                        <Text style={styles.modalValue}>{ventaSeleccionada.producto}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.modalInfoRow}>
-                      <Icon name="numeric" size={20} color="#6b7280" />
-                      <View style={styles.modalInfoContent}>
-                        <Text style={styles.modalLabel}>Cantidad</Text>
-                        <Text style={styles.modalValue}>{ventaSeleccionada.cantidad}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.modalInfoRow}>
-                      <Icon name="cash-multiple" size={20} color="#0077cc" />
-                      <View style={styles.modalInfoContent}>
-                        <Text style={styles.modalLabel}>Valor Total</Text>
-                        <Text style={styles.modalValueDestacado}>
-                          $ {ventaSeleccionada.valor.toLocaleString('es-CO')}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {ventaSeleccionada.observaciones && (
-                      <View style={styles.observacionesContainer}>
-                        <Icon name="note-text" size={20} color="#6b7280" />
-                        <View style={styles.modalInfoContent}>
-                          <Text style={styles.modalLabel}>Observaciones</Text>
-                          <Text style={styles.observacionesModal}>{ventaSeleccionada.observaciones}</Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Botones de acción */}
-                  <View style={styles.modalActions}>
-                    <TouchableOpacity
-                      style={styles.btnCambiarEstado}
-                      onPress={() => setModalEstadoVisible(true)}
-                    >
-                      <Icon name="swap-horizontal" size={20} color="#fff" />
-                      <Text style={styles.btnText}>Cambiar Estado</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.btnEliminar}
-                      onPress={handleEliminar}
-                    >
-                      <Icon name="delete" size={20} color="#fff" />
-                      <Text style={styles.btnText}>Eliminar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </ScrollView>
-          </Animated.View>
-        </View>
-      </Modal>
+          </>
+        )}
+      </DraggableModal>
 
       {/* Modal para cambiar estado */}
       <Modal
@@ -687,44 +620,6 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     textAlign: "center",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  dragHandleContainer: {
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  dragHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: "#d1d5db",
-    borderRadius: 3,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1f2937",
-  },
-  modalBody: {
-    padding: 20,
-  },
   estadoCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -815,11 +710,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
   modalEstadoContent: {
     backgroundColor: "#fff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: "60%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1f2937",
   },
   estadosList: {
     padding: 20,

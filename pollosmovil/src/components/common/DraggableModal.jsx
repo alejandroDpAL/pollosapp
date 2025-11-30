@@ -14,22 +14,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { height } = Dimensions.get('window');
 
-/**
- * DraggableModal - Modal reutilizable con drag handle
- * 
- * @param {boolean} visible - Controla si el modal está visible
- * @param {function} onClose - Función que se ejecuta al cerrar el modal
- * @param {string} title - Título del modal (opcional)
- * @param {boolean} showHeader - Mostrar header con título y botón cerrar (default: true)
- * @param {React.Node} children - Contenido del modal
- * @param {number} initialHeight - Altura inicial como porcentaje (default: 0.6 = 60%)
- * @param {number} minHeight - Altura mínima como porcentaje (default: 0.3 = 30%)
- * @param {number} maxHeight - Altura máxima como porcentaje (default: 0.95 = 95%)
- * @param {boolean} enableDrag - Habilitar drag handle (default: true)
- * @param {number} closeThreshold - Distancia en px para cerrar al arrastrar (default: 100)
- * @param {object} headerStyle - Estilos personalizados para el header
- * @param {object} contentStyle - Estilos personalizados para el contenido
- */
 const DraggableModal = ({
     visible,
     onClose,
