@@ -1,0 +1,7 @@
+import {jwt} from 'jsonwebtoken';
+
+const token = jwt.sign(
+  { userId: 123, email: 'user@example.com' }, 
+  'tu-secreto-super-seguro',                   
+  { expiresIn: '1h' }                           
+);

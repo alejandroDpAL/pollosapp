@@ -1,5 +1,6 @@
 import { pool } from "../database/conexion.js";
 import bcrypt from "bcryptjs";
+import { generateToken, generateRefreshToken } from "../utils/jwt.util.js";
 
 // Configuración
 const SALT_ROUNDS = 10;
@@ -43,10 +44,24 @@ export const AuthUserController = async (req, res) => {
             return res.status(401).json({ message: "Credenciales inválidas" });
         }
 
-        // 6. Login exitoso
+        // 6. Login exitoso - Generar tokens JWT
+        const token = generateToken({
+            id: usuario.id,
+            correo: usuario.correo
+        });
+
+        const refreshToken = generateRefreshToken({
+            id: usuario.id
+        });
+
         return res.status(200).json({
             message: "Autenticación exitosa",
-            user: { id: usuario.id },
+            token,
+            refreshToken,
+            user: { 
+                id: usuario.id,
+                correo: usuario.correo
+            },
         });
 
     } catch (error) {
