@@ -13,5 +13,8 @@ routeVentas.get("/negocios/usuario/:usuario_id", get_negocios_por_usuario);
 routeVentas.post("/ventas/registrada", CrearVentaConproducto);
 routeVentas.get("/detalle/:id", ObtenerDetalleVenta);
 routeVentas.get("/productos/:id/ventas", ObtenerVentasDeProducto);
+// Nuevo endpoint: ventas completas del cliente (cliente + vendedor + productos + lotes)
+routeVentas.get('/clientes/:cliente_id/ventas', listarVentasPorClienteNuevoEnpoint);
+
 
 export default routeVentas

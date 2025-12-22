@@ -6,8 +6,8 @@ const router = Router();
 router.get("/listar", get_reportes_lote);
 router.post("/crear_repoerte_lote", create_reporte_lote);
 router.put("/updatelote/:id", update_reporte_lote);
-router.get("/usuario/:usuario_id", get_reportes_lote_por_usuario)
-router.get("/reportes/general", ReporteGeneralNegocio)
-router.get("/reportes/lote/:id", ReportePorLote)
+router.get("/usuario/:id", get_reportes_lote_por_usuario)
+router.get("/reportes/negocio/:id", ReporteGeneralNegocio)
+router.get("/reportes/lote/:id_lote/Usario/:id_usuario", ReportePorLote)
 
 export default router;

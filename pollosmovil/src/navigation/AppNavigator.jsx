@@ -13,6 +13,9 @@ import Menu from "../components/common/bottom.navigation.jsx";
 import { StatusBar } from "react-native/types_generated/index";
 import InfoClient from "../pages/Users/InfoClient.jsx";
 
+
+
+
 // Pages
 
 
@@ -38,6 +41,7 @@ export default function AppNavigator({ navigationRef, currentRoute }) {
                 <Stack.Screen name="Perfil" component={Perfil} />
                 <Stack.Screen name="modal" component={Modal} />
                 <Stack.Screen name="infoclient" component={InfoClient} />
+
 
             </Stack.Navigator>
 
