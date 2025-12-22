@@ -1,0 +1,19 @@
+# Variables de entorno - NUNCA SUBIR A GIT
+.env
+.env.*
+!.env.example
+
+# Dependencias
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
