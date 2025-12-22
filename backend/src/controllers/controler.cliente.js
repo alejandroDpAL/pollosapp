@@ -21,7 +21,7 @@ export const listarClientes = async (req, res) => {
 };
 
 export const CrearClientes = async (req, res) => {
-  // obtenemos los datos enviados desde el frontend
+ 
   const { usuarioId, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
@@ -36,7 +36,7 @@ export const CrearClientes = async (req, res) => {
       telefono || null,
       correo || null,
       direccion || null,
-      estado ?? 1, // si no se envía, se guarda como activo (1)
+      estado ?? 1, 
     ]);
 
     if (rows.affectedRows > 0) {

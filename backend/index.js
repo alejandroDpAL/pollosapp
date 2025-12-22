@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import dotenv from 'dotenv';
 
-// Cargar variables de entorno
+
 dotenv.config({ path: './src/env/.env' });
 
 import './src/database/conexion.js';
@@ -25,15 +25,13 @@ import authRouter from './src/routes/ruta.auth.js';
 
 const server = express();
 
-// ================== SEGURIDAD ==================
 
-// 1. Helmet - Protección de headers HTTP
 server.use(helmet({
-    contentSecurityPolicy: false, // Ajusta según tus necesidades
+    contentSecurityPolicy: false, 
     crossOriginEmbedderPolicy: false
 }));
 
-// 2. Rate Limiting - Limitar peticiones por IP
+
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
     max: 100, // límite de 100 peticiones por ventana
@@ -56,14 +54,13 @@ server.use(hpp());
 // 4. CORS configurado correctamente
 const allowedOrigins = [
     'http://localhost:3000',
-    'http://localhost:19006', // Expo
-    'http://192.168.1.100:19006', // Ajusta a tu IP local
-    // Agrega aquí los dominios de producción cuando los tengas
+    'http://localhost:19006', 
+    'http://192.168.1.100:19006',
+    
 ];
 
 server.use(cors({
     origin: function (origin, callback) {
-        // Permitir peticiones sin origin (como apps móviles o Postman)
         if (!origin) return callback(null, true);
         
         if (allowedOrigins.indexOf(origin) !== -1) {
@@ -77,7 +74,7 @@ server.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// ================== MIDDLEWARE ==================
+
 
 server.use(body_parser.json({ limit: '10mb' }));
 server.use(body_parser.urlencoded({ extended: false, limit: '10mb' }));
@@ -125,6 +122,6 @@ server.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3000;
 server.listen(port, '0.0.0.0', () => {
-    console.log("✅ Servidor corriendo en el puerto", port);
-    console.log("🔒 Seguridad activada: Helmet, Rate Limiting, CORS configurado");
+    console.log(" Servidor corriendo en el puerto", port);
+    console.log(" Seguridad activada: Helmet, Rate Limiting, CORS configurado");
 });
