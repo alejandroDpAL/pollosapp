@@ -21,7 +21,7 @@ export const listarClientes = async (req, res) => {
 };
 
 export const CrearClientes = async (req, res) => {
-  // obtenemos los datos enviados desde el frontend
+ 
   const { usuarioId, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
@@ -36,7 +36,7 @@ export const CrearClientes = async (req, res) => {
       telefono || null,
       correo || null,
       direccion || null,
-      estado ?? 1, // si no se envía, se guarda como activo (1)
+      estado ?? 1, 
     ]);
 
     if (rows.affectedRows > 0) {
@@ -93,7 +93,7 @@ export const ActualizarCliente = async (req, res) => {
       res.status(404).json({ success: false, message: "No se encontró el cliente para actualizar." });
     }
   } catch (error) {
-    console.error("❌ Error en ActualizarCliente:", error);
+    console.error(" Error en ActualizarCliente:", error);
     res.status(500).json({
       message: "Error al conectarse con el servidor: " + error.message,
     });

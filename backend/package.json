@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "migrate": "node src/database/run-migration.js",
+    "migrate:db": "node src/database/migrate.js migrate",
+    "migrate:verify": "node src/database/migrate.js verify",
+    "migrate:info": "node src/database/migrate.js info"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +18,13 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.11.0",
     "mysql2": "^3.14.1",
     "nodemon": "^3.1.10"

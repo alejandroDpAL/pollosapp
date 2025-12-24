@@ -1,0 +1,16 @@
+import { Router } from "express";
+import { verifyToken } from "../middleware/auth.middleware.js";
+import { get_reportes_lote, create_reporte_lote, update_reporte_lote, get_reportes_lote_por_usuario, ReportePorLote, ReporteGeneralNegocio } from "../controllers/controler.Reporte.lote.js";
+import { validateCreateReporteLote, validateUpdateReporteLote, validateNegocioId, validateReporteLoteId, validateUsuarioId } from "../middleware/validators.js";
+
+const router = Router();
+
+// Todas las rutas requieren autenticación
+router.get("/listar", verifyToken, get_reportes_lote);
+router.post("/crear_repoerte_lote", verifyToken, validateCreateReporteLote, create_reporte_lote);
+router.put("/updatelote/:id", verifyToken, validateUpdateReporteLote, update_reporte_lote);
+router.get("/usuario/:id", verifyToken, validateUsuarioId, get_reportes_lote_por_usuario)
+router.get("/reportes/negocio/:id", verifyToken, validateNegocioId, ReporteGeneralNegocio)
+router.get("/reportes/lote/:id_lote/Usario/:id_usuario", verifyToken, validateReporteLoteId, ReportePorLote)
+
+export default router;
