@@ -93,7 +93,7 @@ export const ActualizarCliente = async (req, res) => {
       res.status(404).json({ success: false, message: "No se encontró el cliente para actualizar." });
     }
   } catch (error) {
-    console.error("❌ Error en ActualizarCliente:", error);
+    console.error(" Error en ActualizarCliente:", error);
     res.status(500).json({
       message: "Error al conectarse con el servidor: " + error.message,
     });

@@ -1,7 +1,7 @@
 # Documentación Completa - Sistema de Seguridad y Autenticación JWT
 
-**Fecha de implementación:** 23 de diciembre de 2025  
-**Proyecto:** Pollos App Backend  
+**implementación:** 23 de diciembre de 2025  
+**carpeta :**Backend  
 **Branch:** Implemet_jsonwebtoken
 
 ---
@@ -21,7 +21,7 @@
 
 ---
 
-## RESUMEN EJECUTIVO
+## RESUMEN 
 
 Se ha implementado un sistema completo de seguridad para el backend, corrigiendo múltiples vulnerabilidades y estableciendo un flujo de autenticación JWT robusto basado en las mejores prácticas de la industria.
 

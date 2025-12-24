@@ -4,6 +4,7 @@ import { verifyAccessToken } from '../utils/jwt.util.js';
  * Middleware para verificar ACCESS TOKENS
  * RECHAZA refresh tokens - solo acepta access tokens válidos
  */
+
 export const verifyToken = (req, res, next) => {
     try {
         // Obtener token del header Authorization
@@ -28,11 +29,8 @@ export const verifyToken = (req, res, next) => {
             });
         }
 
-        // CRÍTICO: Verificar que sea un ACCESS TOKEN válido
-        // Si es un refresh token, verifyAccessToken lo rechazará
         const decoded = verifyAccessToken(token);
         
-        // Agregar información del usuario al request
         req.user = {
             id: decoded.id,
             correo: decoded.correo
@@ -74,6 +72,7 @@ export const verifyToken = (req, res, next) => {
  * Middleware opcional - permite acceso sin token pero lo valida si existe
  * Solo acepta access tokens válidos, ignora refresh tokens
  */
+
 export const optionalAuth = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -91,15 +90,14 @@ export const optionalAuth = (req, res, next) => {
                         correo: decoded.correo
                     };
                 } catch (error) {
-                    // Si el token es inválido o es refresh token, simplemente no asigna usuario
-                    // No bloquea el acceso
+                    // Ignorar errores de token inválido o expirado
                 }
             }
         }
         
         next();
     } catch (error) {
-        // Si hay error, simplemente continúa sin usuario
+        
         next();
     }
 };

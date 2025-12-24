@@ -18,6 +18,6 @@ export const pool = createPool({
     console.log(' Conectado exitosamente a la base de datos');
     connection.release(); // Libera la conexión
   } catch (error) {
-    console.error('❌ Error al conectar a la base de datos:', error.message);
+    console.error(' Error al conectar a la base de datos:', error.message);
   }
 })();

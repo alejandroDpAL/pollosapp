@@ -10,7 +10,7 @@ const ACCESS_TOKEN_EXPIRE = process.env.ACCESS_TOKEN_EXPIRE || '15m';
 const REFRESH_TOKEN_EXPIRE = process.env.REFRESH_TOKEN_EXPIRE || '7d';
 
 if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
-    throw new Error('❌ ERROR: ACCESS_TOKEN_SECRET y REFRESH_TOKEN_SECRET deben estar configurados en .env');
+    throw new Error(' ERROR: ACCESS_TOKEN_SECRET y REFRESH_TOKEN_SECRET deben estar configurados en .env');
 }
 
 /**
@@ -18,13 +18,14 @@ if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
  * @param {Object} payload - Datos del usuario a incluir en el token
  * @returns {string} Access Token JWT
  */
+
 export const generateAccessToken = (payload) => {
     try {
         const token = jwt.sign(
             {
                 id: payload.id,
                 correo: payload.correo,
-                type: 'access' // IMPORTANTE: Identifica que es un access token
+                type: 'access' 
             },
             ACCESS_TOKEN_SECRET,
             {
@@ -44,12 +45,13 @@ export const generateAccessToken = (payload) => {
  * @param {Object} payload - Datos del usuario
  * @returns {string} Refresh token
  */
+
 export const generateRefreshToken = (payload) => {
     try {
         const refreshToken = jwt.sign(
             {
                 id: payload.id,
-                type: 'refresh' // IMPORTANTE: Identifica que es un refresh token
+                type: 'refresh' 
             },
             REFRESH_TOKEN_SECRET,
             {
@@ -70,6 +72,7 @@ export const generateRefreshToken = (payload) => {
  * @returns {Object} Datos decodificados del token
  * @throws {Error} Si el token es inválido o es un refresh token
  */
+
 export const verifyAccessToken = (token) => {
     try {
         const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET, {
@@ -77,7 +80,6 @@ export const verifyAccessToken = (token) => {
             audience: 'pollosapp-api'
         });
         
-        // CRÍTICO: Verificar que sea un access token
         if (decoded.type !== 'access') {
             throw new Error('Token no es un access token');
         }
@@ -94,6 +96,7 @@ export const verifyAccessToken = (token) => {
  * @returns {Object} Datos decodificados del token
  * @throws {Error} Si el token es inválido o es un access token
  */
+
 export const verifyRefreshToken = (token) => {
     try {
         const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET, {
@@ -101,7 +104,7 @@ export const verifyRefreshToken = (token) => {
             audience: 'pollosapp-refresh'
         });
         
-        // CRÍTICO: Verificar que sea un refresh token
+       
         if (decoded.type !== 'refresh') {
             throw new Error('Token no es un refresh token');
         }
@@ -112,16 +115,12 @@ export const verifyRefreshToken = (token) => {
     }
 };
 
-// ============================================
-// FUNCIONES LEGACY (DEPRECADAS)
-// ============================================
-// Mantener temporalmente para compatibilidad
 
 /**
  * @deprecated Usar generateAccessToken en su lugar
  */
 export const generateToken = (payload) => {
-    console.warn('⚠️ DEPRECADO: Usa generateAccessToken en lugar de generateToken');
+    console.warn(' DEPRECADO: Usa generateAccessToken en lugar de generateToken');
     return generateAccessToken(payload);
 };
 
@@ -129,6 +128,6 @@ export const generateToken = (payload) => {
  * @deprecated Usar verifyAccessToken en su lugar
  */
 export const verifyToken = (token) => {
-    console.warn('⚠️ DEPRECADO: Usa verifyAccessToken en lugar de verifyToken');
+    console.warn(' DEPRECADO: Usa verifyAccessToken en lugar de verifyToken');
     return verifyAccessToken(token);
 };

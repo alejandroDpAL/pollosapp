@@ -19,7 +19,7 @@ export const registrarPerdida = async (req, res) => {
             data: rows
         });
     } catch (error) {
-        console.error("❌ Error al registrar pérdida:", error);
+        console.error(" Error al registrar pérdida:", error);
         res.status(500).json({ message: "Error en el servidor.", error: error.message });
     }
 };
@@ -43,7 +43,7 @@ export const registrarVenta = async (req, res) => {
             data: rows
         });
     } catch (error) {
-        console.error("❌ Error al registrar venta:", error);
+        console.error(" Error al registrar venta:", error);
         res.status(500).json({ message: "Error en el servidor.", error: error.message });
     }
 };
@@ -64,7 +64,7 @@ export const cerrarLote = async (req, res) => {
             data: rows
         });
     } catch (error) {
-        console.error("❌ Error al cerrar lote:", error);
+        console.error(" Error al cerrar lote:", error);
         res.status(500).json({ message: "Error en el servidor.", error: error.message });
     }
 };
@@ -97,7 +97,7 @@ export const getPerdidasByUsuario = async (req, res) => {
         }
 
     } catch (error) {
-        console.error("❌ Error al obtener pérdidas por usuario:", error);
+        console.error(" Error al obtener pérdidas por usuario:", error);
         res.status(500).json({
             message: "Error en el servidor.",
             error: error.message

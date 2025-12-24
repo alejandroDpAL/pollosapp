@@ -1,4 +1,3 @@
-// Sistema de Migraciones Automáticas - Pollos App
 import { pool } from './conexion.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -83,7 +82,7 @@ class DatabaseMigrator {
                             }
                         }
                     } else if (isCreateIndex) {
-                        // Ejecutar índices silenciosamente (pueden fallar si ya existen)
+                        // Ejecutar índices silenciosamente 
                         try {
                             await pool.query(statement);
                         } catch (err) {

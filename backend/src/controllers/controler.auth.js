@@ -6,9 +6,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from ".
 const SALT_ROUNDS = 10;
 const LOGIN_DELAY_MS = 500;
 
-/**
- * Obtener información del cliente (IP y User-Agent)
- */
+
 const getClientInfo = (req) => {
     return {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -106,6 +104,7 @@ export const AuthUserController = async (req, res) => {
  * Renovar access token usando refresh token
  * POST /auth/refresh
  */
+
 export const RefreshTokenController = async (req, res) => {
     const { refreshToken } = req.body;
 
@@ -208,6 +207,7 @@ export const RefreshTokenController = async (req, res) => {
  * Cerrar sesión (revocar refresh token)
  * POST /auth/logout
  */
+
 export const LogoutController = async (req, res) => {
     const { refreshToken } = req.body;
 
@@ -256,6 +256,7 @@ export const LogoutController = async (req, res) => {
  * POST /auth/logout-all
  * Requiere autenticación (access token)
  */
+
 export const LogoutAllController = async (req, res) => {
     try {
         // El middleware verifyToken ya agregó req.user

@@ -14,7 +14,6 @@ routeVentas.get("/negocios/usuario/:usuario_id", verifyToken, get_negocios_por_u
 routeVentas.post("/ventas/registrada", verifyToken, CrearVentaConproducto);
 routeVentas.get("/detalle/:id", verifyToken, ObtenerDetalleVenta);
 routeVentas.get("/productos/:id/ventas", verifyToken, ObtenerVentasDeProducto);
-// Nuevo endpoint: ventas completas del cliente (cliente + vendedor + productos + lotes)
 routeVentas.get('/clientes/:cliente_id/ventas', verifyToken, listarVentasPorClienteNuevoEnpoint);
 
 

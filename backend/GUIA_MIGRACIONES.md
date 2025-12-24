@@ -1,7 +1,5 @@
 # GUIA RAPIDA - MIGRACIONES DE BASE DE DATOS
 
-## Para Tu Amigo (Solo 3 Pasos)
-
 ```bash
 # 1. Clonar e instalar
 git clone <repo>
@@ -76,7 +74,7 @@ MIGRACION COMPLETADA EXITOSAMENTE
    git push
    ```
 
-### Cuando TU AMIGO actualice:
+### Actualizar:
 
 ```bash
 git pull

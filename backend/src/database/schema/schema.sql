@@ -1,8 +1,3 @@
--- ============================================
--- SCHEMA COMPLETO - POLLOS APP
--- ============================================
--- Este archivo contiene el schema completo de la base de datos
--- Actualizado: 23 de diciembre de 2025
 
 -- ============================================
 -- TABLA: negocio
