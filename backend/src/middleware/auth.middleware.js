@@ -1,12 +1,8 @@
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: './src/env/.env' });
-
-const AUTH_SECRET = process.env.AUTH_SECRET || 'esunsecretoentumirada';
+import { verifyAccessToken } from '../utils/jwt.util.js';
 
 /**
- * Middleware para verificar el token JWT
+ * Middleware para verificar ACCESS TOKENS
+ * RECHAZA refresh tokens - solo acepta access tokens válidos
  */
 export const verifyToken = (req, res, next) => {
     try {
@@ -15,7 +11,8 @@ export const verifyToken = (req, res, next) => {
 
         if (!authHeader) {
             return res.status(401).json({ 
-                message: "Acceso denegado. Token no proporcionado" 
+                message: "Acceso denegado. Token no proporcionado",
+                code: "NO_TOKEN"
             });
         }
 
@@ -26,12 +23,14 @@ export const verifyToken = (req, res, next) => {
 
         if (!token) {
             return res.status(401).json({ 
-                message: "Token inválido" 
+                message: "Token inválido",
+                code: "INVALID_TOKEN"
             });
         }
 
-        // Verificar y decodificar el token
-        const decoded = jwt.verify(token, AUTH_SECRET);
+        // CRÍTICO: Verificar que sea un ACCESS TOKEN válido
+        // Si es un refresh token, verifyAccessToken lo rechazará
+        const decoded = verifyAccessToken(token);
         
         // Agregar información del usuario al request
         req.user = {
@@ -41,24 +40,39 @@ export const verifyToken = (req, res, next) => {
 
         next();
     } catch (error) {
+        // Manejar errores específicos
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({ 
-                message: "Token expirado" 
+                message: "Access token expirado. Usa el refresh token para renovarlo.",
+                code: "TOKEN_EXPIRED"
             });
         }
+        
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({ 
-                message: "Token inválido" 
+                message: "Access token inválido",
+                code: "INVALID_TOKEN"
             });
         }
+        
+        // Error si intentan usar un refresh token en rutas protegidas
+        if (error.message === 'Token no es un access token') {
+            return res.status(403).json({ 
+                message: "No puedes usar un refresh token para acceder a esta ruta. Usa el access token.",
+                code: "REFRESH_TOKEN_NOT_ALLOWED"
+            });
+        }
+        
         return res.status(500).json({ 
-            message: "Error al verificar token" 
+            message: "Error al verificar token",
+            code: "VERIFICATION_ERROR"
         });
     }
 };
 
 /**
  * Middleware opcional - permite acceso sin token pero lo valida si existe
+ * Solo acepta access tokens válidos, ignora refresh tokens
  */
 export const optionalAuth = (req, res, next) => {
     try {
@@ -70,11 +84,16 @@ export const optionalAuth = (req, res, next) => {
                 : authHeader;
             
             if (token) {
-                const decoded = jwt.verify(token, AUTH_SECRET);
-                req.user = {
-                    id: decoded.id,
-                    correo: decoded.correo
-                };
+                try {
+                    const decoded = verifyAccessToken(token);
+                    req.user = {
+                        id: decoded.id,
+                        correo: decoded.correo
+                    };
+                } catch (error) {
+                    // Si el token es inválido o es refresh token, simplemente no asigna usuario
+                    // No bloquea el acceso
+                }
             }
         }
         

@@ -1,0 +1,219 @@
+create table negocio
+(
+    id          int auto_increment
+        primary key,
+    nombre      varchar(50)          not null,
+    descripcion text                 null,
+    activo      tinyint(1) default 1 null,
+    logo        varchar(50)          not null,
+    correo      varchar(50)          not null,
+    fecha       date                 null,
+    telefono    int                  not null,
+    constraint nombre
+        unique (nombre)
+)
+    collate = utf8mb4_general_ci;
+
+create table productos
+(
+    id           int auto_increment
+        primary key,
+    nombre       varchar(100) not null,
+    negocio_id   int          not null,
+    cantidad     int          not null,
+    costo        int          not null,
+    fecha_compra date         null,
+    fecha_venta  date         null,
+    constraint productos_ibfk_1
+        foreign key (negocio_id) references negocio (id)
+)
+    collate = utf8mb4_general_ci;
+
+create table lotes
+(
+    id               int auto_increment
+        primary key,
+    producto_id      int            not null,
+    cantidad_inicial int            not null,
+    cantidad_actual  int            not null,
+    precio           decimal(10, 2) not null,
+    fecha            date           not null,
+    descripcion      text           null,
+    nombre           varchar(50)    not null,
+    constraint lotes_ibfk_1
+        foreign key (producto_id) references productos (id)
+)
+    collate = utf8mb4_general_ci;
+
+create table costos
+(
+    id             int auto_increment
+        primary key,
+    lote_id        int                                 not null,
+    nombre         varchar(100)                        not null,
+    valor          decimal(10, 2)                      not null,
+    fecha_compra   date                                not null,
+    observaciones  text                                null,
+    fecha_creacion timestamp default CURRENT_TIMESTAMP not null,
+    constraint costos_ibfk_1
+        foreign key (lote_id) references lotes (id)
+)
+    collate = utf8mb4_general_ci;
+
+create index idx_costos_fecha
+    on costos (fecha_compra);
+
+create index lote_id
+    on costos (lote_id);
+
+create index producto_id
+    on lotes (producto_id);
+
+create table perdidas
+(
+    id             int auto_increment
+        primary key,
+    lote_id        int                                                    not null,
+    cantidad       int                                                    not null,
+    motivo         enum ('mortalidad', 'enfermedad', 'accidente', 'otro') not null,
+    descripcion    text                                                   null,
+    fecha_perdida  date                                                   not null,
+    fecha_creacion timestamp default CURRENT_TIMESTAMP                    not null,
+    constraint perdidas_ibfk_1
+        foreign key (lote_id) references lotes (id)
+)
+    collate = utf8mb4_general_ci;
+
+create index lote_id
+    on perdidas (lote_id);
+
+create index tipo_negocio_id
+    on productos (negocio_id);
+
+create table usuarios
+(
+    id             int auto_increment
+        primary key,
+    nombre         varchar(100)                                 not null,
+    identificacion varchar(50)                                  not null,
+    telefono       varchar(20)                                  null,
+    correo         varchar(100)                                 not null,
+    password       varchar(255)                                 not null,
+    cargo          varchar(50)                                  null,
+    estado         enum ('activo', 'inactivo') default 'activo' null,
+    constraint correo
+        unique (correo),
+    constraint identificacion
+        unique (identificacion)
+)
+    collate = utf8mb4_general_ci;
+
+create table clientes
+(
+    id         int auto_increment
+        primary key,
+    usuario_id int                                  null,
+    nombre     varchar(100)                         not null,
+    telefono   varchar(20)                          null,
+    correo     varchar(100)                         null,
+    direccion  text                                 null,
+    estado     tinyint(1) default 1                 null,
+    fecha      timestamp  default CURRENT_TIMESTAMP not null,
+    constraint fk_clientes_usuarios
+        foreign key (usuario_id) references usuarios (id)
+)
+    collate = utf8mb4_general_ci;
+
+create table refresh_tokens
+(
+    id          int auto_increment
+        primary key,
+    usuario_id  int                                  not null,
+    token       varchar(500)                         not null,
+    expira_en   datetime                             not null,
+    revocado    tinyint(1) default 0                 null,
+    creado_en   timestamp  default CURRENT_TIMESTAMP null,
+    revocado_en timestamp                            null,
+    ip_address  varchar(45)                          null,
+    user_agent  varchar(255)                         null,
+    constraint refresh_tokens_ibfk_1
+        foreign key (usuario_id) references usuarios (id)
+            on delete cascade
+)
+    collate = utf8mb4_unicode_ci;
+
+create index idx_expira_en
+    on refresh_tokens (expira_en);
+
+create index idx_revocado
+    on refresh_tokens (revocado);
+
+create index idx_token
+    on refresh_tokens (token(255));
+
+create index idx_usuario_id
+    on refresh_tokens (usuario_id);
+
+create table reportes_lote
+(
+    id                    int auto_increment
+        primary key,
+    lote_id               int                                 not null,
+    cantidad_inicial      int                                 not null,
+    cantidad_vendida      int                                 not null,
+    cantidad_perdida      int                                 not null,
+    cantidad_restante     int                                 not null,
+    total_ingresos        decimal(12, 2)                      not null,
+    total_costos          decimal(12, 2)                      not null,
+    ganancia_neta         decimal(12, 2)                      not null,
+    porcentaje_mortalidad decimal(5, 2)                       not null,
+    fecha_generacion      timestamp default CURRENT_TIMESTAMP not null,
+    usuario_id            int                                 null,
+    constraint lote_id
+        unique (lote_id),
+    constraint fk_reportes_usuarios
+        foreign key (usuario_id) references usuarios (id),
+    constraint reportes_lote_ibfk_1
+        foreign key (lote_id) references lotes (id)
+)
+    collate = utf8mb4_general_ci;
+
+create table ventas
+(
+    id              int auto_increment
+        primary key,
+    lote_id         int                                                                                       not null,
+    cliente_id      int                                                                                       null,
+    usuario_id      int                                                                                       null,
+    cantidad        int                                                                                       not null,
+    precio_unitario decimal(10, 2)                                                                            not null,
+    valor_total     decimal(10, 2)                                                                            not null,
+    fecha           datetime                                                                                  not null,
+    observaciones   text                                                                                      null,
+    fecha_creacion  timestamp                                                       default CURRENT_TIMESTAMP not null,
+    producto_id     int                                                                                       null,
+    estado          enum ('pendiente', 'realizada', 'pagado', 'parcial', 'anulado') default 'pendiente'       null,
+    constraint fk_ventas_productos
+        foreign key (producto_id) references productos (id),
+    constraint fk_ventas_usuarios
+        foreign key (usuario_id) references usuarios (id),
+    constraint ventas_ibfk_1
+        foreign key (lote_id) references lotes (id),
+    constraint ventas_ibfk_2
+        foreign key (cliente_id) references clientes (id)
+)
+    collate = utf8mb4_general_ci;
+
+create index cliente_id
+    on ventas (cliente_id);
+
+create index idx_ventas_fecha
+    on ventas (fecha);
+
+create index idx_ventas_producto_id
+    on ventas (producto_id);
+
+create index lote_id
+    on ventas (lote_id);
+
+
