@@ -1,109 +1,97 @@
-this is start
-# PollosApp
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-PollosApp es una aplicación desarrollada para la gestión y control de ventas, clientes, productos y costos de un negocio avícola o de cualquier tipo de microempresa que requiera registrar movimientos de inventario y ventas. Su propósito principal es facilitar la administración de datos relacionados con lotes, pérdidas, reportes y operaciones comerciales de manera clara y accesible.
+# Getting Started
 
----
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-## Descripción General
+## Step 1: Start Metro
 
-El proyecto está compuesto por un **backend** desarrollado en **Node.js con Express** y una base de datos **SQL**, además de un **frontend móvil** construido con **React Native**.
-El sistema permite registrar información sobre productos, clientes, usuarios, lotes y ventas, centralizando los datos en una estructura relacional sólida y escalable.
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
----
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-## Funcionalidades Principales
+```sh
+# Using npm
+npm start
 
-* Registro y gestión de **usuarios**, **clientes** y **negocios**.
-* Control completo de **productos**, **lotes** y **ventas**.
-* Seguimiento de **costos**, **pérdidas** y **reportes por lote**.
-* Generación de estadísticas para visualizar ingresos, costos y ganancias.
-* Módulo de autenticación para proteger el acceso a las funciones del sistema.
-* Base de datos estructurada con relaciones entre entidades comerciales.
-
----
-
-## Arquitectura del Proyecto
-
-**Backend**
-
-* Framework: Node.js con Express
-* Base de datos: SQL
-* Controladores y rutas modulares
-* Autenticación mediante tokens
-* Estructura escalable y mantenible
-
-**Frontend (Aplicación móvil)**
-
-* Framework: React Native
-* Comunicación con el backend a través de API REST
-* Interfaz enfocada en la simplicidad y la eficiencia
-* Manejo de contexto para autenticación y estados de usuario
-
----
-
-## Estructura de la Base de Datos
-
-El modelo relacional incluye las siguientes tablas principales:
-
-* **usuarios**: gestión de credenciales, roles y estado.
-* **clientes**: información de contacto y vínculo con usuarios.
-* **negocio**: datos del negocio propietario.
-* **productos**: inventario general vinculado a cada negocio.
-* **lotes**: control detallado de cada grupo de productos.
-* **ventas**: registro de operaciones comerciales.
-* **costos**: gastos asociados a cada lote.
-* **pérdidas**: registro de bajas o incidentes.
-* **reportes_lote**: consolidación de datos económicos y operativos.
-
----
-
-## Instalación y Ejecución
-
-### Requisitos
-
-* Node.js v18 o superior
-* Base de datos SQL configurada
-* npm o yarn
-
-### Backend
-
-```bash
-git clone https://github.com/alejandroDpAL/pollosapp.git
-cd pollosapp/backend
-npm install
-npm run start
+# OR using Yarn
+yarn start
 ```
 
-### Frontend (React Native)
+## Step 2: Build and run your app
 
-```bash
-cd pollosapp/frontend
-npm install
-npx react-native run-android
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+
+### Android
+
+```sh
+# Using npm
+npm run android
+
+# OR using Yarn
+yarn android
 ```
 
----
+### iOS
 
-## Objetivo del Proyecto
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
-PollosApp nace como una iniciativa académica y práctica para fortalecer el aprendizaje en desarrollo de software, aplicando principios de diseño, modelado de bases de datos y construcción de APIs. El propósito es crear una herramienta funcional, adaptable y útil para pequeños negocios que buscan digitalizar su gestión.
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
 
----
+```sh
+bundle install
+```
 
-## Aviso y Derechos
+Then, and every time you update your native dependencies, run:
 
-Este proyecto **no busca colaboradores externos** ni aportes de terceros.
-**PollosApp** está siendo desarrollada únicamente como un **proyecto personal y académico**, sin fines comerciales ni de distribución pública en esta etapa.
+```sh
+bundle exec pod install
+```
 
-Todo el contenido y estructura del proyecto están **protegidos y respaldados ante nuestra autoridad educativa y legal correspondiente**.
-Cualquier intento de copia, modificación o uso no autorizado será tratado conforme a las normas aplicables.
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
 
----
+```sh
+# Using npm
+npm run ios
 
-## Desarrolladores
+# OR using Yarn
+yarn ios
+```
 
-**Pablo Andrés Perdomo**
-**Alejandro David Pasaje**
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-Desarrolladores junior egresados del **SENA**, con enfoque en crecimiento profesional y aprendizaje continuo en tecnologías de desarrollo web y móvil.
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+
+## Step 3: Modify your app
+
+Now that you have successfully run the app, let's make changes!
+
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+
+## Congratulations! :tada:
+
+You've successfully run and modified your React Native App. :partying_face:
+
+### Now what?
+
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+
+# Troubleshooting
+
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+# Learn More
+
+To learn more about React Native, take a look at the following resources:
+
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.

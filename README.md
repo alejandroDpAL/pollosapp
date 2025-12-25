@@ -1,93 +1,109 @@
-# PollosApp - Autenticación JWT
+this is start
+# PollosApp
 
-**Estado**: ✅ Completado y funcionando  
-**Plataforma**: React Native + Node.js + JWT
-
----
-
-## 📱 App Instalada y Ejecutándose
-
-- **Package**: com.pollosmovil
-- **Emulador**: Android 36
-- **Estado**: RUNNING (PID 5401)
-- **APK**: 100 MB compilado
+PollosApp es una aplicación desarrollada para la gestión y control de ventas, clientes, productos y costos de un negocio avícola o de cualquier tipo de microempresa que requiera registrar movimientos de inventario y ventas. Su propósito principal es facilitar la administración de datos relacionados con lotes, pérdidas, reportes y operaciones comerciales de manera clara y accesible.
 
 ---
 
-## 🎯 Funcionalidades
+## Descripción General
 
-✅ Login con JWT  
-✅ Persistencia de tokens (AsyncStorage)  
-✅ Axios interceptores automáticos  
-✅ Navegación condicional  
-✅ Logout completo  
+El proyecto está compuesto por un **backend** desarrollado en **Node.js con Express** y una base de datos **SQL**, además de un **frontend móvil** construido con **React Native**.
+El sistema permite registrar información sobre productos, clientes, usuarios, lotes y ventas, centralizando los datos en una estructura relacional sólida y escalable.
 
 ---
 
-## 📁 Estructura
+## Funcionalidades Principales
 
-```
-backend/src/
-├── controllers/controler.auth.js    ← JWT Logic
-├── middleware/auth.middleware.js    ← Token Validation
-├── routes/ruta.auth.js              ← /api/auth endpoints
-└── utils/jwt.util.js                ← JWT Utils
-
-pollosmovil/src/
-├── Hook/context/AuthContext.jsx     ← Auth State
-├── pages/Auth/Login.jsx             ← Login Screen
-├── services/apiConnection.js        ← Axios Config
-└── App.jsx                          ← Entry Point
-```
+* Registro y gestión de **usuarios**, **clientes** y **negocios**.
+* Control completo de **productos**, **lotes** y **ventas**.
+* Seguimiento de **costos**, **pérdidas** y **reportes por lote**.
+* Generación de estadísticas para visualizar ingresos, costos y ganancias.
+* Módulo de autenticación para proteger el acceso a las funciones del sistema.
+* Base de datos estructurada con relaciones entre entidades comerciales.
 
 ---
 
-## 🚀 Ejecutar npm run android
+## Arquitectura del Proyecto
+
+**Backend**
+
+* Framework: Node.js con Express
+* Base de datos: SQL
+* Controladores y rutas modulares
+* Autenticación mediante tokens
+* Estructura escalable y mantenible
+
+**Frontend (Aplicación móvil)**
+
+* Framework: React Native
+* Comunicación con el backend a través de API REST
+* Interfaz enfocada en la simplicidad y la eficiencia
+* Manejo de contexto para autenticación y estados de usuario
+
+---
+
+## Estructura de la Base de Datos
+
+El modelo relacional incluye las siguientes tablas principales:
+
+* **usuarios**: gestión de credenciales, roles y estado.
+* **clientes**: información de contacto y vínculo con usuarios.
+* **negocio**: datos del negocio propietario.
+* **productos**: inventario general vinculado a cada negocio.
+* **lotes**: control detallado de cada grupo de productos.
+* **ventas**: registro de operaciones comerciales.
+* **costos**: gastos asociados a cada lote.
+* **pérdidas**: registro de bajas o incidentes.
+* **reportes_lote**: consolidación de datos económicos y operativos.
+
+---
+
+## Instalación y Ejecución
+
+### Requisitos
+
+* Node.js v18 o superior
+* Base de datos SQL configurada
+* npm o yarn
+
+### Backend
 
 ```bash
-cd pollosmovil
-
-# IMPORTANTE: Esperar 90+ segundos para que Android boot
-# Luego ejecutar:
-npm run android
-```
-
----
-
-## 🔐 Credenciales
-
-```
-Email: usuario@example.com
-Password: password123
-```
-
----
-
-## 📊 Backend
-
-```bash
-cd backend
+git clone https://github.com/alejandroDpAL/pollosapp.git
+cd pollosapp/backend
 npm install
-npm run dev
+npm run start
 ```
 
-Puerto: 3000
+### Frontend (React Native)
 
----
-
-## ✨ Verificación
-
-```powershell
-# App instalada
-adb shell pm list packages | Select-String com.pollos
-
-# App ejecutándose
-adb shell pidof com.pollosmovil
-
-# Logs
-adb logcat
+```bash
+cd pollosapp/frontend
+npm install
+npx react-native run-android
 ```
 
 ---
 
-**Completado**: 25 Diciembre 2025
+## Objetivo del Proyecto
+
+PollosApp nace como una iniciativa académica y práctica para fortalecer el aprendizaje en desarrollo de software, aplicando principios de diseño, modelado de bases de datos y construcción de APIs. El propósito es crear una herramienta funcional, adaptable y útil para pequeños negocios que buscan digitalizar su gestión.
+
+---
+
+## Aviso y Derechos
+
+Este proyecto **no busca colaboradores externos** ni aportes de terceros.
+**PollosApp** está siendo desarrollada únicamente como un **proyecto personal y académico**, sin fines comerciales ni de distribución pública en esta etapa.
+
+Todo el contenido y estructura del proyecto están **protegidos y respaldados ante nuestra autoridad educativa y legal correspondiente**.
+Cualquier intento de copia, modificación o uso no autorizado será tratado conforme a las normas aplicables.
+
+---
+
+## Desarrolladores
+
+**Pablo Andrés Perdomo**
+**Alejandro David Pasaje**
+
+Desarrolladores junior egresados del **SENA**, con enfoque en crecimiento profesional y aprendizaje continuo en tecnologías de desarrollo web y móvil.
