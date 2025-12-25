@@ -9,7 +9,7 @@ import {
   deleteClient,
   getClientById,
 } from "../../Hook/Api/clientApi";
-import { useAuth } from "../../Hook/context/AuthContext";
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 import { useNavigation } from "@react-navigation/native";
 
 const Clients = () => {

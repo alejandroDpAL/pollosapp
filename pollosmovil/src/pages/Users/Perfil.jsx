@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { getPerfilUsuario, updateUser } from "../../Hook/Api/userApi.js";
-import { useAuth } from "../../Hook/context/AuthContext.js"; 
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 
 export default function Perfil() {
     const navigation = useNavigation();

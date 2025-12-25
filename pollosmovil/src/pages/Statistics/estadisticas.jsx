@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HeaderPrincipal from "../../components/layout/header";
 import { LineChart, BarChart } from "react-native-chart-kit";
 import { GetReporteLoteId_Usario } from "../../Hook/Api/Estadisticas";
-import { useAuth } from "../../Hook/context/AuthContext";
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 
 const Estadisticas = ({ navigation }) => {
   const { user } = useAuth();

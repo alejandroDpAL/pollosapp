@@ -6,7 +6,7 @@ import Menu from '../../components/common/bottom.navigation.jsx';
 import Boton from '../../components/common/bottom.plus.jsx';
 import DraggableModal from "../../components/common/DraggableModal";
 import { getVentasAdmin } from '../../Hook/Api/VentasApi.js';
-import { useAuth } from "../../Hook/context/AuthContext";
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 
 const { width, height } = Dimensions.get("window");
 const TAB_WIDTH = 120;

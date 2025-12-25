@@ -6,7 +6,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import Modal from "../../components/common/Modal.componet";
 import ModalAlert from "../../components/common/Modal.Alet";
-import { useAuth } from "../../Hook/context/AuthContext";
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 import { UserPerfil } from "../../Hook/Api/userApi";
 
 const Ajustes = () => {

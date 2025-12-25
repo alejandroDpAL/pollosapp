@@ -1,7 +1,7 @@
 // src/pages/Auth/Login.jsx
 import React, { useState } from "react";
 import {View,Text,TextInput,TouchableOpacity,Alert,ActivityIndicator,StyleSheet,KeyboardAvoidingView,Platform,StatusBar,ScrollView,} from "react-native";
-import { useAuth } from "../../Hook/context/AuthContext";
+import { useAuth } from "../../Hook/context/AuthContext.jsx";
 import { loginUser } from "../../Hook/Api/auth.Api";
 import ModalAlert from "../../components/common/Modal.Alet";
 
@@ -51,7 +51,12 @@ export default function Login() {
         try {
             const response = await loginUser(email, password);
             if (response.success) {
-                login(response.user);
+                // Pasar user, accessToken y refreshToken al contexto
+                login({
+                    user: response.user,
+                    accessToken: response.accessToken,
+                    refreshToken: response.refreshToken,
+                });
             } else {
                 setModalType("error");
                 setModalMessage(response.message || "Credenciales inválidas");

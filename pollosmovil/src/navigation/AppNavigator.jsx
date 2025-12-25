@@ -1,3 +1,4 @@
+// AppNavigator.jsx
 import React from "react";
 import { View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -10,7 +11,6 @@ import Modal from "../components/common/Modal.componet";
 import clientes from "../pages/Users/clientes.jsx";
 import negocios from "../pages/Business/business";
 import Menu from "../components/common/bottom.navigation.jsx";
-import { StatusBar } from "react-native/types_generated/index";
 import InfoClient from "../pages/Users/InfoClient.jsx";
 
 
