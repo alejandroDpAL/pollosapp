@@ -2,7 +2,7 @@
 
 /*
 ====================================================================
-✅ CORRECTO - Usar api importado con interceptores automáticos
+CORRECTO - Usar api importado con interceptores automáticos
 ====================================================================
 */
 
@@ -34,7 +34,7 @@ const crearCliente = async (datos) => {
 
 /*
 ====================================================================
-❌ INCORRECTO - NO hacer esto
+ INCORRECTO - NO hacer esto
 ====================================================================
 */
 
@@ -50,7 +50,7 @@ axios.get('http://192.168.100.11:3000/cliente');
 
 /*
 ====================================================================
-🔄 REFRESH AUTOMÁTICO
+REFRESH AUTOMÁTICO
 ====================================================================
 
 Si el accessToken expira (401):
@@ -87,17 +87,4 @@ const handleLogout = async () => {
   }
 };
 
-/*
-====================================================================
-📝 RESUMEN
-====================================================================
 
-1. ✅ Importa api desde apiConnection.js
-2. ✅ Usa api.get(), api.post(), etc. normalmente
-3. ✅ NO agregues headers manualmente
-4. ✅ El token se agrega automáticamente
-5. ✅ El refresh es automático si expira
-6. ✅ Usa logout() del contexto para cerrar sesión
-
-====================================================================
-*/
