@@ -7,7 +7,7 @@ const routeUsers = Router()
 // Todas las rutas requieren autenticación
 routeUsers.get('/listar', verifyToken, listarUsuarios) 
 routeUsers.get('/perfil/:id_usuario', verifyToken, PerfilUsuario) 
-routeUsers.post('/registrar', verifyToken, CrearUsuarios)
+routeUsers.post('/registrar', CrearUsuarios)
 routeUsers.put('/actualizar/:id_usuario', verifyToken, ActualizarUsuario)
 routeUsers.get('/usuarios/:id/ventas', verifyToken, VentasPorUsuario);
 
