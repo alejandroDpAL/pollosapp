@@ -131,19 +131,22 @@ export const get_negocios_por_usuario = async (req, res) => {
       });
     }
 
+    // Como la tabla negocio NO tiene usuario_id en la estructura actual,
+    // esta consulta devuelve TODOS los negocios activos
+    // TODO: Agregar campo usuario_id a la tabla negocio en la BD
     const sql = `
       SELECT *
       FROM negocio
-      WHERE usuario_id = ?
+      WHERE activo = 1
     `;
 
-    const [rows] = await pool.query(sql, [usuario_id]);
+    const [rows] = await pool.query(sql);
 
     if (rows.length > 0) {
       return res.status(200).json(rows);
     } else {
       return res.status(404).json({
-        message: "No se encontraron negocios registrados para este usuario."
+        message: "No se encontraron negocios activos."
       });
     }
   } catch (error) {

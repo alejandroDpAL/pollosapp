@@ -1,21 +1,6 @@
 
 -- ============================================
--- TABLA: negocio
--- ============================================
-CREATE TABLE IF NOT EXISTS negocio (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    descripcion TEXT NULL,
-    activo TINYINT(1) DEFAULT 1 NULL,
-    logo VARCHAR(50) NOT NULL,
-    correo VARCHAR(50) NOT NULL,
-    fecha DATE NULL,
-    telefono INT NOT NULL,
-    CONSTRAINT nombre UNIQUE (nombre)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- ============================================
--- TABLA: usuarios
+-- TABLA: usuarios (CREAR PRIMERO)
 -- ============================================
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -29,6 +14,26 @@ CREATE TABLE IF NOT EXISTS usuarios (
     CONSTRAINT correo UNIQUE (correo),
     CONSTRAINT identificacion UNIQUE (identificacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ============================================
+-- TABLA: negocio (CON usuario_id)
+-- ============================================
+CREATE TABLE IF NOT EXISTS negocio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion TEXT NULL,
+    activo TINYINT(1) DEFAULT 1 NULL,
+    logo VARCHAR(50) NOT NULL,
+    correo VARCHAR(50) NOT NULL,
+    fecha DATE NULL,
+    telefono INT NOT NULL,
+    CONSTRAINT nombre UNIQUE (nombre),
+    CONSTRAINT fk_negocio_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Índice para negocio
+CREATE INDEX IF NOT EXISTS idx_negocio_usuario ON negocio(usuario_id);
 
 -- ============================================
 -- TABLA: productos

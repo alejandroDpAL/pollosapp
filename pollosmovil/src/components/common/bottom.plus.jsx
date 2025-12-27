@@ -1,13 +1,14 @@
 import { View, StyleSheet, TouchableOpacity, Animated, Text, Dimensions } from 'react-native';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from '@react-native-community/blur';
 import { useNavigation } from '@react-navigation/native';
-import NuevaVenta from '../../pages/Business/NuevaVenta';
+
+const NuevaVenta = lazy(() => import('../../pages/Business/NuevaVenta'));
 
 const { width } = Dimensions.get('window');
 
-const Boton = () => {
+const Boton = ({ onVentaRegistrada }) => {
   const [open, setOpen] = useState(false);
   const [modalVentaVisible, setModalVentaVisible] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
@@ -143,12 +144,13 @@ const Boton = () => {
       </View>
 
       {/* Renderizar NuevaVenta */}
-      {modalVentaVisible && (
+      <Suspense fallback={null}>
         <NuevaVenta
           visible={modalVentaVisible}
           onClose={() => setModalVentaVisible(false)}
+          onVentaRegistrada={onVentaRegistrada}
         />
-      )}
+      </Suspense>
     </View>
   );
 };

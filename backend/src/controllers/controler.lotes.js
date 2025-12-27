@@ -170,15 +170,55 @@ export const get_lotesByUsuario = async (req, res) => {
       });
     }
 
-    // Consultar los lotes del usuario
-    const sql = "SELECT * FROM lotes WHERE usuario_id = ?";
-    const [rows] = await pool.query(sql, [usuario_id]);
+    const sql = `
+      SELECT 
+        l.*,
+        p.id AS producto_id_rel,
+        p.nombre AS producto_nombre,
+        p.negocio_id,
+        n.nombre AS negocio_nombre
+      FROM lotes l
+      INNER JOIN productos p ON l.producto_id = p.id
+      INNER JOIN negocio n ON p.negocio_id = n.id
+      WHERE l.cantidad_actual > 0
+      ORDER BY l.fecha DESC
+    `;
+    
+    const [rows] = await pool.query(sql);
 
     if (rows.length > 0) {
       res.status(200).json(rows);
     } else {
+      // Si no hay lotes con stock, intenta obtener todos los lotes para diagnóstico
+      const sqlDiag = `
+        SELECT 
+          l.id,
+          l.nombre,
+          l.cantidad_actual,
+          l.cantidad_inicial,
+          p.nombre AS producto_nombre,
+          n.nombre AS negocio_nombre
+        FROM lotes l
+        INNER JOIN productos p ON l.producto_id = p.id
+        INNER JOIN negocio n ON p.negocio_id = n.id
+        ORDER BY l.fecha DESC
+        LIMIT 5
+      `;
+      
+      const [allLotes] = await pool.query(sqlDiag);
+      
       res.status(404).json({
-        message: "No se encontraron lotes para este usuario."
+        message: "No se encontraron lotes con stock disponible.",
+        diagnostico: {
+          total_lotes_en_bd: allLotes.length,
+          lotes_sin_stock: allLotes.map(l => ({
+            id: l.id,
+            nombre: l.nombre,
+            cantidad_actual: l.cantidad_actual,
+            producto: l.producto_nombre,
+            negocio: l.negocio_nombre
+          }))
+        }
       });
     }
   } catch (error) {

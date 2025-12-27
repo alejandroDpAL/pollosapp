@@ -6,10 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "migrate": "node src/database/run-migration.js",
-    "migrate:db": "node src/database/migrate.js migrate",
-    "migrate:verify": "node src/database/migrate.js verify",
-    "migrate:info": "node src/database/migrate.js info"
+    "migrate": "node src/database/migrate.js",
+    "migrate:seed": "node src/database/migrate.js --seed",
+    "seed": "node src/database/migrate.js --seed",
+    "db:status": "node src/database/migrate.js"
   },
   "keywords": [],
   "author": "",

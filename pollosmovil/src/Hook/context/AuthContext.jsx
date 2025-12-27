@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
 
+export { AuthContext };
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.multiSet([
       ['accessToken', accessToken],
       ['refreshToken', refreshToken],
+      ['user', JSON.stringify(user)],
     ]);
 
     setUser(user);
@@ -21,19 +24,25 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+    await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
     setUser(null);
     setIsLoggedIn(false);
   };
 
   const restoreSession = async () => {
     try {
-      const token = await AsyncStorage.getItem('accessToken');
-      if (token) {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const userData = await AsyncStorage.getItem('user');
+
+      if (accessToken && userData) {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
         setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
       }
     } catch (error) {
-      console.error('Error restoring session:', error);
+      setIsLoggedIn(false);
     } finally {
       setLoading(false);
     }
