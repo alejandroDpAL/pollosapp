@@ -4,7 +4,28 @@ Sistema profesional de migraciones de base de datos con control automático de v
 
 ---
 
-## Inicio Rápido (3 Pasos)
+## QUICK START: Solucionar Inconsistencia negocio ↔ usuario
+
+**Problema:** Las ventas no tenían trazabilidad completa (no sabías qué usuario/negocio)
+
+**Solución:** 3 comandos
+
+```bash
+# 1. Aplicar la migración que soluciona el problema
+npm run migrate
+
+# 2. Verificar que se aplicó correctamente
+npm run db:status
+
+# 3. Validar que todo funciona (15 tests automáticos)
+npm run test:migrations
+```
+
+**Resultado esperado:** 15 PASS / 0 FAIL
+
+---
+
+## Inicio Rápido (3 Pasos) - PRIMERA VEZ
 
 ### 1. Crear Base de Datos
 ```bash
@@ -21,24 +42,62 @@ Edita `backend/src/database/conexion.js` con tus credenciales MySQL.
 ### 3. Ejecutar Migraciones
 ```bash
 cd backend
-npm run migrate:seed
+npm run migrate
 ```
 
-**¡Listo!** Tu base de datos está configurada con datos de prueba.
+**¡Listo!** Tu base de datos está configurada y con trazabilidad completa.
 
 ---
 
 ## Comandos Disponibles
 
-### 1. **Ejecutar Migraciones** (Recomendado)
+### 0. **Validar que la solución funciona** (Testing)
+```bash
+npm run test:migrations
+```
+**¿Qué hace?**
+- Ejecuta 15 tests automáticos
+- Valida que negocio → usuario esté correctamente relacionado
+- Valida Foreign Key, índices, rollback, restore
+- **RECOMENDADO:** Ejecuta SIEMPRE después de migrar
+
+**Salida esperada:**
+```
+TEST RESULTS: 15 PASS / 0 FAIL
+ALL TESTS PASSED!
+```
+
+---
+
+### 1. **Ejecutar Migraciones** (SOLUCIONA EL PROBLEMA)
 ```bash
 npm run migrate
 ```
 **¿Qué hace?**
 - Detecta si la base de datos está vacía y crea el schema inicial
+- **Crea relación negocio ↔ usuario** (soluciona inconsistencia)
+- Agrega columna `usuario_id` a tabla `negocio`
+- Establece Foreign Key con ON DELETE CASCADE
+- Crea índice para optimización
 - Verifica migraciones pendientes y las ejecuta automáticamente
 - Registra qué migraciones ya se ejecutaron (tabla `_migrations`)
 - Es seguro ejecutarlo múltiples veces (no duplica datos)
+
+**¿Qué se agregó a la BD?**
+```sql
+-- Columna que vincula cada negocio con su dueño
+ALTER TABLE negocio ADD COLUMN usuario_id INT NULL;
+
+-- Relación: Asegura que usuario_id siempre exista en usuarios
+ALTER TABLE negocio ADD CONSTRAINT fk_negocio_usuario 
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) 
+  ON DELETE CASCADE;
+
+-- Índice: Optimiza búsquedas de negocios por usuario
+CREATE INDEX idx_negocio_usuario ON negocio(usuario_id);
+```
+
+**IMPORTANTE:** Ejecuta después `npm run test:migrations` para validar
 
 ---
 
@@ -51,6 +110,20 @@ npm run migrate:seed
 - Inserta datos de prueba (usuario, negocios, productos, lotes, clientes, ventas)
 - **ADVERTENCIA: NO ejecutar en producción**
 
+Alias rápido:
+```bash
+npm run db:demo
+```
+Hace lo mismo que `migrate:seed` (útil para entornos de prueba).
+
+### 2.1 **Datos de ejemplo basados en dump (pollos(1).sql)**
+```bash
+npm run db:seed:demo
+```
+**¿Qué hace?**
+- Ejecuta migraciones y luego carga datos de ejemplo tomados del dump (usuarios, negocios, productos, lotes, clientes, ventas).
+- Úsalo en una base vacía para replicar datos realistas.
+
 ---
 
 ### 3. **Ver Estado de la Base de Datos**
@@ -59,8 +132,16 @@ npm run db:status
 ```
 **¿Qué muestra?**
 - Total de tablas creadas
-- Migraciones ejecutadas
+- Migraciones ejecutadas (incluyendo la de negocio → usuario)
 - Lista de tablas y migraciones
+
+**Salida esperada:**
+```
+Migraciones ejecutadas: 2
+   - 20251227_add_usuario_id_to_negocio.up.sql
+   - 20251227_create_refresh_tokens.up.sql
+Tablas: 11 (usuarios, negocio, productos, lotes, ventas, etc.)
+```
 
 ---
 
@@ -71,6 +152,70 @@ npm run seed
 **¿Qué hace?**
 - Inserta solo datos de prueba
 - Requiere que las migraciones ya estén ejecutadas
+
+### 5. **Restaurar desde un dump SQL**
+```bash
+# Opción A: colocar el archivo en src/database/backups/pollos_dump.sql
+npm run db:restore:dump
+
+# Opción B: pasar la ruta del dump por CLI
+npm run db:rollback -- "C:\\ruta\\mi_dump.sql"
+
+# Opción C: usar variable de entorno
+set DB_DUMP_PATH=C:\\ruta\\mi_dump.sql & npm run db:rollback
+```
+**¿Qué hace?**
+- Ejecuta `restore-dump.js`: elimina la BD, la crea y carga el dump indicado.
+- Ruta por defecto: `src/database/backups/pollos_dump.sql`.
+- Variables de entorno usadas: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `DB_DUMP_PATH` (opcional).
+- Auto‑detecta el cliente `mysql` del sistema; si no está disponible, usa `mysql2` para importar en bloque y, si es necesario, por sentencias individuales.
+
+**¿Cuándo usar?**
+- Necesitas restaurar datos antiguos
+- Quieres volver a estado conocido bueno
+- **ADVERTENCIA:** Borra datos recientes, solo restaura el backup
+
+### 6. **Rollback rápido (Restaurar desde Dump)**
+```bash
+# Alias de restore-dump (usa las mismas opciones)
+npm run db:rollback
+
+# Con ruta personalizada
+npm run db:rollback -- "C:\\ruta\\mi_dump.sql"
+```
+Hace lo mismo que `db:restore:dump` y funciona aunque no tengas el cliente `mysql` instalado (gracias al fallback con `mysql2`).
+
+---
+
+### 7. **Rollback de Migraciones (Estructura)**
+```bash
+# Revertir la última migración aplicada (1 paso)
+npm run db:migrate:rollback
+
+# Equivalente explícito (1 paso)
+npm run db:migrate:rollback:1
+
+# Revertir n pasos (ej. 2)
+node src/database/migrate.js --down=2
+
+# Volver hasta una migración específica (por nombre de *.up.sql)
+npm run db:migrate:to -- 20251227_add_usuario_id_to_negocio.up.sql
+```
+**¿Qué hace?**
+- Revierte la última migración aplicada
+- **PRESERVA** los datos de usuarios, negocios, productos, lotes, ventas
+- Solo elimina la estructura que agregó (columna usuario_id, FK, índice)
+- Permite re-aplicar después si fue un error
+
+**¿Cuándo usar?**
+- Necesitas revertir cambios rápidamente
+- Algo no funcionó correctamente
+- Quieres intentar nuevamente
+
+**Notas:**
+- Solo se ejecutan archivos `*.up.sql` y sus respectivos `*.down.sql` para rollback.
+- La tabla `_migrations` registra las `*.up.sql` aplicadas. Archivos antiguos no pareados pueden seguir listados, pero el runner los ignora.
+- Asegúrate de que cada nueva migración tenga su par `up/down` para poder avanzar y retroceder de forma segura.
 
 ---
 
@@ -519,8 +664,9 @@ Tablas adicionales:
 **¿Problemas con las migraciones?**
 1. Revisa logs en consola
 2. Verifica conexión a BD
-3. Consulta troubleshooting arriba
-4. Verifica que tengas permisos MySQL
+3. Ejecuta `npm run test:migrations` para diagnóstico
+4. Consulta troubleshooting arriba
+5. Verifica que tengas permisos MySQL
 
 ---
 

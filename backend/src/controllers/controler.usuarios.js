@@ -72,20 +72,20 @@ export const CrearUsuarios = async (req, res) => {
   const saltRounds = 10; // nivel de seguridad para hash bcrypt
 
   try {
-    // 1️ Validar campos obligatorios
+    // 1. Validar campos obligatorios
     if (!nombre?.trim() || !identificacion == null || isNaN(Number(identificacion)) || !correo?.trim() || !password?.trim()) {
       return res.status(400).json({
         message: "Los campos 'nombre', 'identificación', 'correo' y 'password' son obligatorios.",
       });
     }
 
-    // 2️ Validar formato de correo
+    // 2. Validar formato de correo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       return res.status(400).json({ message: "Formato de correo electrónico inválido." });
     }
 
-    // 3️ Verificar si el correo ya existe
+    // 3. Verificar si el correo ya existe
     const [existingUser] = await pool.query(
       "SELECT id FROM usuarios WHERE correo = ? LIMIT 1",
       [correo]
@@ -95,10 +95,10 @@ export const CrearUsuarios = async (req, res) => {
       return res.status(409).json({ message: "El correo electrónico ya está registrado." });
     }
 
-    // 4️ Encriptar contraseña
+    // 4. Encriptar contraseña
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // 5️ Insertar nuevo usuario
+    // 5. Insertar nuevo usuario
     const sql = `
       INSERT INTO usuarios (nombre, identificacion, telefono, correo, password, cargo, estado)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -114,7 +114,7 @@ export const CrearUsuarios = async (req, res) => {
       estado?.trim() || "activo",
     ]);
 
-    // 6️Confirmar inserción
+    // 6. Confirmar inserción
     if (result.affectedRows > 0) {
       return res.status(201).json({
         message: "Usuario registrado con éxito.",

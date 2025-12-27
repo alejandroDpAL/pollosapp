@@ -11,11 +11,23 @@ npm run migrate
 # Ejecutar migraciones + insertar datos de prueba
 npm run migrate:seed
 
+# Alias para datos de ejemplo (igual a migrate:seed)
+npm run db:demo
+
+# Datos de ejemplo basados en dump (pollos(1).sql)
+npm run db:seed:demo
+
 # Ver estado de la base de datos
 npm run db:status
 
 # Solo insertar datos de prueba
 npm run seed
+
+# Restaurar desde un dump SQL colocado en src/database/backups/pollos_dump.sql
+npm run db:restore:dump
+
+# Rollback rápido (alias de restore)
+npm run db:rollback
 ```
 
 ## ¿Qué hace cada comando?

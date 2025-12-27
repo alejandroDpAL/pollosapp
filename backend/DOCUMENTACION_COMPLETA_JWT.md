@@ -21,7 +21,7 @@
 
 ---
 
-## RESUMEN 
+## RESUMEN EJECUTIVO
 
 Se ha implementado un sistema completo de seguridad para el backend, corrigiendo múltiples vulnerabilidades y estableciendo un flujo de autenticación JWT robusto basado en las mejores prácticas de la industria.
 

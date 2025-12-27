@@ -1,6 +1,6 @@
 # Seguridad Implementada en el Backend 
 
-##  Medidas de Seguridad Activadas
+## Medidas de Seguridad Activadas
 
 ### 1. **Helmet** - Protección de Headers HTTP
 - Protege contra XSS, clickjacking, y otras vulnerabilidades web
@@ -26,7 +26,7 @@
 
 ---
 
-##  Uso de Autenticación JWT
+## Uso de Autenticación JWT
 
 ### 1. Login (Obtener Token)
 
@@ -100,7 +100,7 @@ Todas estas rutas ahora requieren el token JWT:
 
 ---
 
-##  Integración con React Native
+## Integración con React Native
 
 En tu aplicación móvil, guarda el token después del login:
 
@@ -148,7 +148,7 @@ const fetchData = async () => {
 
 ---
 
-##  Configuración
+## Configuración
 
 ### Variables de Entorno (.env)
 
@@ -183,7 +183,7 @@ const allowedOrigins = [
 
 ---
 
-##  Manejo de Errores
+## Manejo de Errores
 
 ### Respuestas de Error Comunes
 
@@ -224,7 +224,7 @@ const allowedOrigins = [
 
 ---
 
-##  Archivos Creados/Modificados
+## Archivos Creados/Modificados
 
 ### Nuevos Archivos:
 - `src/middleware/auth.middleware.js` - Middleware de verificación JWT
@@ -238,7 +238,7 @@ const allowedOrigins = [
 
 ---
 
-##  Probando la Seguridad
+## Probando la Seguridad
 
 ### Con Postman o Thunder Client:
 
@@ -253,21 +253,21 @@ const allowedOrigins = [
 
 ---
 
-##  Checklist de Seguridad
+## Checklist de Seguridad
 
--  Helmet activado
--  Rate Limiting configurado
--  CORS restrictivo
--  JWT implementado
--  Contraseñas hasheadas con bcrypt
--  HPP activado
--  Variables de entorno protegidas
--  Manejo de errores global
--  Límite de tamaño de payload (10mb)
+- Helmet activado
+- Rate Limiting configurado
+- CORS restrictivo
+- JWT implementado
+- Contraseñas hasheadas con bcrypt
+- HPP activado
+- Variables de entorno protegidas
+- Manejo de errores global
+- Límite de tamaño de payload (10mb)
 
 ---
 
-##  Próximos Pasos Recomendados
+## Próximos Pasos Recomendados
 
 1. **Implementar refresh token endpoint** para renovar tokens expirados
 2. **Agregar validación de datos** con express-validator en controladores
