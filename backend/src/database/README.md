@@ -1,12 +1,12 @@
-# 🚀 Sistema de Migraciones y Base de Datos - Pollos App
+# Sistema de Migraciones y Base de Datos - Pollos App
 
 Sistema profesional de migraciones de base de datos con control automático de versiones y trazabilidad completa.
 
 ---
 
-## ⚡ Inicio Rápido (3 Pasos)
+## Inicio Rápido (3 Pasos)
 
-### 1️⃣ Crear Base de Datos
+### 1. Crear Base de Datos
 ```bash
 mysql -u root -p
 ```
@@ -15,30 +15,30 @@ CREATE DATABASE pollosapp CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 exit;
 ```
 
-### 2️⃣ Configurar Conexión
+### 2. Configurar Conexión
 Edita `backend/src/database/conexion.js` con tus credenciales MySQL.
 
-### 3️⃣ Ejecutar Migraciones
+### 3. Ejecutar Migraciones
 ```bash
 cd backend
 npm run migrate:seed
 ```
 
-✅ **¡Listo!** Tu base de datos está configurada con datos de prueba.
+**¡Listo!** Tu base de datos está configurada con datos de prueba.
 
 ---
 
-## 📋 Comandos Disponibles
+## Comandos Disponibles
 
 ### 1. **Ejecutar Migraciones** (Recomendado)
 ```bash
 npm run migrate
 ```
 **¿Qué hace?**
-- ✅ Detecta si la base de datos está vacía → Crea el schema inicial
-- ✅ Verifica migraciones pendientes → Las ejecuta automáticamente
-- ✅ Registra qué migraciones ya se ejecutaron (tabla `_migrations`)
-- ✅ Es seguro ejecutarlo múltiples veces (no duplica datos)
+- Detecta si la base de datos está vacía y crea el schema inicial
+- Verifica migraciones pendientes y las ejecuta automáticamente
+- Registra qué migraciones ya se ejecutaron (tabla `_migrations`)
+- Es seguro ejecutarlo múltiples veces (no duplica datos)
 
 ---
 
@@ -47,9 +47,9 @@ npm run migrate
 npm run migrate:seed
 ```
 **¿Qué hace?**
-- ✅ Todo lo de `npm run migrate`
-- ✅ Inserta datos de prueba (usuario, negocios, productos, lotes, clientes, ventas)
-- ⚠️ **NO ejecutar en producción**
+- Todo lo de `npm run migrate`
+- Inserta datos de prueba (usuario, negocios, productos, lotes, clientes, ventas)
+- **ADVERTENCIA: NO ejecutar en producción**
 
 ---
 
@@ -58,9 +58,9 @@ npm run migrate:seed
 npm run db:status
 ```
 **¿Qué muestra?**
-- 📊 Total de tablas creadas
-- 🔄 Migraciones ejecutadas
-- 📝 Lista de tablas y migraciones
+- Total de tablas creadas
+- Migraciones ejecutadas
+- Lista de tablas y migraciones
 
 ---
 
@@ -69,12 +69,12 @@ npm run db:status
 npm run seed
 ```
 **¿Qué hace?**
-- 🌱 Inserta solo datos de prueba
-- ⚠️ Requiere que las migraciones ya estén ejecutadas
+- Inserta solo datos de prueba
+- Requiere que las migraciones ya estén ejecutadas
 
 ---
 
-## 🔄 Flujo de Migraciones
+## Flujo de Migraciones
 
 ### **Escenario 1: Primera Vez (BD Vacía)**
 ```
@@ -84,7 +84,7 @@ npm run migrate
 → Crea schema inicial (usuarios, negocio, productos, lotes, etc.)
 → Ejecuta migraciones pendientes (add_usuario_id_to_negocio.sql)
 → Registra migraciones en tabla _migrations
-✅ Base de datos lista
+→ Base de datos lista
 ```
 
 ### **Escenario 2: Base de Datos Existente**
@@ -95,7 +95,7 @@ npm run migrate
 → Revisa migraciones pendientes
 → Ejecuta solo las que faltan
 → Registra en tabla _migrations
-✅ Base de datos actualizada
+→ Base de datos actualizada
 ```
 
 ### **Escenario 3: Agregar Datos de Prueba**
@@ -110,57 +110,57 @@ npm run migrate:seed
    - 8 Lotes con stock
    - 5 Clientes
    - 8 Ventas
-✅ Sistema listo para probar
+→ Sistema listo para probar
 ```
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 backend/src/database/
-├── migrate.js                    ← Sistema de migraciones
-├── conexion.js                   ← Conexión a BD
-├── migrations/                   ← Carpeta de migraciones
-│   ├── create_refresh_tokens.sql        ← Migración 1
-│   ├── add_usuario_id_to_negocio.sql    ← Migración 2 (CRÍTICA)
-│   └── seed_datos_prueba.sql            ← Datos de prueba
+├── migrate.js                    <- Sistema de migraciones
+├── conexion.js                   <- Conexión a BD
+├── migrations/                   <- Carpeta de migraciones
+│   ├── create_refresh_tokens.sql        <- Migración 1
+│   ├── add_usuario_id_to_negocio.sql    <- Migración 2 (CRÍTICA)
+│   └── seed_datos_prueba.sql            <- Datos de prueba
 ├── schema/
-│   └── schema.sql                ← Schema inicial (solo primera vez)
-└── README.md                     ← Esta documentación
+│   └── schema.sql                <- Schema inicial (solo primera vez)
+└── README.md                     <- Esta documentación
 ```
 
 ---
 
-## 📖 Análisis de la Base de Datos
+## Análisis de la Base de Datos
 
-### 🔴 Problema Detectado
+### Problema Detectado
 
 El sistema necesitaba **trazabilidad completa** para responder:
 
 > "¿Quién vendió?, ¿Qué vendió?, ¿De qué negocio?, ¿A qué cliente?"
 
 **Antes de la migración:**
-- ❌ La tabla `negocio` NO tenía `usuario_id`
-- ❌ No se podía saber quién era el dueño de cada negocio
-- ❌ Cualquier usuario podría vender productos de cualquier negocio
-- ❌ Falta de validación de permisos
+- La tabla `negocio` NO tenía `usuario_id`
+- No se podía saber quién era el dueño de cada negocio
+- Cualquier usuario podría vender productos de cualquier negocio
+- Falta de validación de permisos
 
 **Después de la migración:**
-- ✅ Trazabilidad completa: Usuario → Negocio → Producto → Lote → Venta
-- ✅ Cada usuario ve solo sus negocios, productos y lotes
-- ✅ Validación automática de permisos
-- ✅ Soporte para múltiples negocios por usuario
+- Trazabilidad completa: Usuario → Negocio → Producto → Lote → Venta
+- Cada usuario ve solo sus negocios, productos y lotes
+- Validación automática de permisos
+- Soporte para múltiples negocios por usuario
 
 ---
 
-### 💡 Caso de Uso Real
+### Caso de Uso Real
 
 **Alejandro tiene 3 negocios:**
 
 ```
 Usuario: Alejandro (usuario_id = 1)
-├─ Negocio 1: "Granja Pollos El Roble" 🐔
+├─ Negocio 1: "Granja Pollos El Roble"
 │  ├─ Productos: Pollo Rojo, Pollo Blanco
 │  │  ├─ Lotes: 
 │  │  │  ├─ Lote Pollos Rojos Enero (100 unidades, 70 disponibles)
@@ -168,13 +168,13 @@ Usuario: Alejandro (usuario_id = 1)
 │  ├─ Clientes: Supermercado A, Restaurante B
 │  └─ Ventas: 20 pollos a Supermercado A
 │
-├─ Negocio 2: "Cabaña Conejos Premium" 🐰
+├─ Negocio 2: "Cabaña Conejos Premium"
 │  ├─ Productos: Conejo Blanco, Conejo Gris
 │  │  ├─ Lotes: Lote Conejos Blancos 2025 (60, 45 disponibles)
 │  ├─ Clientes: Carnicería C
 │  └─ Ventas: 10 conejos a Carnicería C
 │
-└─ Negocio 3: "Carnicería Premium" 🥩
+└─ Negocio 3: "Carnicería Premium"
    ├─ Productos: Carne de Cerdo, Res, Pollo
    │  ├─ Lotes: Lote Cerdo Enero (500 kg, 400 disponibles)
    ├─ Clientes: Hotel D, Restaurante E
@@ -186,21 +186,21 @@ Usuario: Alejandro (usuario_id = 1)
 Usuario dice: "Vendí 20 pollos rojos al Supermercado A"
 
 Sistema registra automáticamente:
-- usuario_id: 1 (Alejandro) ← Del JWT
-- lote_id: 1 (Lote Pollos Rojos) ← Usuario selecciona
-- cliente_id: 1 (Supermercado A) ← Usuario selecciona
-- cantidad: 20 ← Usuario ingresa
-- negocio_id: 1 ← Se deduce automático (lote → producto → negocio)
-- valor_total: 900.000 ← Calculado
+- usuario_id: 1 (Alejandro) <- Del JWT
+- lote_id: 1 (Lote Pollos Rojos) <- Usuario selecciona
+- cliente_id: 1 (Supermercado A) <- Usuario selecciona
+- cantidad: 20 <- Usuario ingresa
+- negocio_id: 1 <- Se deduce automático (lote → producto → negocio)
+- valor_total: 900.000 <- Calculado
 
-✅ Trazabilidad completa registrada
+Trazabilidad completa registrada
 ```
 
 ---
 
-## 📋 Historial de Migraciones
+## Historial de Migraciones
 
-### ✅ **create_refresh_tokens.sql**
+### **create_refresh_tokens.sql**
 **Fecha:** Inicial  
 **Descripción:** Crea tabla para tokens JWT de refresh
 
@@ -209,14 +209,14 @@ Sistema registra automáticamente:
 
 ---
 
-### 🆕 **add_usuario_id_to_negocio.sql** (27/12/2025)
-**Estado:** ⚠️ **CRÍTICA**  
+### **add_usuario_id_to_negocio.sql** (27/12/2025)
+**Estado:** CRÍTICA  
 **Descripción:** Establece relación Usuario → Negocio para trazabilidad completa
 
 **Cambios:**
-- ✅ Agrega columna `usuario_id` a tabla `negocio`
-- ✅ Crea foreign key `fk_negocio_usuario`
-- ✅ Crea índices de optimización:
+- Agrega columna `usuario_id` a tabla `negocio`
+- Crea foreign key `fk_negocio_usuario`
+- Crea índices de optimización:
   - `idx_negocio_usuario`
   - `idx_productos_negocio`
   - `idx_lotes_producto`
@@ -227,14 +227,14 @@ Sistema registra automáticamente:
 
 **Por qué es importante:**
 Esta migración resuelve el problema de trazabilidad. Con ella:
-- ✅ Cada usuario ve solo sus negocios, productos y lotes
-- ✅ Validación automática de permisos en ventas
-- ✅ Soporte para múltiples negocios por usuario
-- ✅ Control completo de inventario por usuario
+- Cada usuario ve solo sus negocios, productos y lotes
+- Validación automática de permisos en ventas
+- Soporte para múltiples negocios por usuario
+- Control completo de inventario por usuario
 
 ---
 
-### 🌱 **seed_datos_prueba.sql** (27/12/2025)
+### **seed_datos_prueba.sql** (27/12/2025)
 **Estado:** Opcional  
 **Descripción:** Inserta datos de prueba realistas
 
@@ -247,11 +247,11 @@ Esta migración resuelve el problema de trazabilidad. Con ella:
 - 8 Ventas de ejemplo
 - Costos y pérdidas
 
-⚠️ **NO ejecutar en producción**
+**ADVERTENCIA: NO ejecutar en producción**
 
 ---
 
-## ⚠️ IMPORTANTE: Antes de Ejecutar
+## IMPORTANTE: Antes de Ejecutar
 
 ### 1. **Backup de la Base de Datos**
 Siempre haz backup antes de ejecutar migraciones:
@@ -301,7 +301,7 @@ export const pool = mysql.createPool({
 
 ---
 
-## 🔍 Verificar Migración Exitosa
+## Verificar Migración Exitosa
 
 ### **Opción 1: Desde terminal**
 ```bash
@@ -309,9 +309,9 @@ export const pool = mysql.createPool({
 npm run db:status
 
 # Salida esperada:
-# 📊 Estado actual de la base de datos:
-#    📋 Total de tablas: 11
-#    🔄 Migraciones ejecutadas: 2
+# Estado actual de la base de datos:
+#    Total de tablas: 11
+#    Migraciones ejecutadas: 2
 ```
 
 ### **Opción 2: Desde MySQL**
@@ -348,7 +348,7 @@ ORDER BY u.nombre, n.nombre;
 
 ---
 
-## 🐛 Troubleshooting (Solución de Problemas)
+## Troubleshooting (Solución de Problemas)
 
 ### **Error: "Access denied for user"**
 ```bash
@@ -379,7 +379,7 @@ npm run migrate
 
 ---
 
-## 🎯 Casos de Uso
+## Casos de Uso
 
 ### **Caso 1: Desarrollador nuevo en el proyecto**
 ```bash
@@ -399,7 +399,7 @@ exit;
 
 npm run migrate:seed
 
-# ✅ Listo para desarrollar
+# Listo para desarrollar
 ```
 
 ### **Caso 2: Actualizar BD en producción**
@@ -428,29 +428,29 @@ exit;
 # 2. Recrear con datos de prueba
 npm run migrate:seed
 
-# ✅ BD limpia con datos de prueba
+# BD limpia con datos de prueba
 ```
 
 ---
 
-## 💡 Tips y Buenas Prácticas
+## Tips y Buenas Prácticas
 
-1. ✅ **Siempre** haz backup antes de migrar
-2. ✅ Ejecuta `npm run migrate` después de hacer `git pull`
-3. ✅ Usa `--seed` solo en desarrollo/testing
-4. ✅ Cada nueva columna/tabla → Nueva migración
-5. ✅ Nombra las migraciones con fecha: `YYYY-MM-DD_descripcion.sql`
-6. ❌ No modifiques migraciones ya ejecutadas
-7. ❌ No ejecutes seed en producción
+1. **Siempre** haz backup antes de migrar
+2. Ejecuta `npm run migrate` después de hacer `git pull`
+3. Usa `--seed` solo en desarrollo/testing
+4. Cada nueva columna/tabla → Nueva migración
+5. Nombra las migraciones con fecha: `YYYY-MM-DD_descripcion.sql`
+6. No modifiques migraciones ya ejecutadas
+7. No ejecutes seed en producción
 
 ---
 
-## 🛠️ Estructura de Relaciones Final
+## Estructura de Relaciones Final
 
 ```
 usuarios
   ↓
-negocio (usuario_id) ← AGREGADO CON MIGRACIÓN
+negocio (usuario_id) <- AGREGADO CON MIGRACIÓN
   ↓
 productos (negocio_id)
   ↓
@@ -467,7 +467,7 @@ Tablas adicionales:
 
 ---
 
-## 🔄 Flujo de Venta Completo
+## Flujo de Venta Completo
 
 ```
 ┌─────────────────────────────────────┐
@@ -479,9 +479,9 @@ Tablas adicionales:
     │ SELECT lotes con stock > 0 │
     │ WHERE negocio.usuario = 1  │
     │                            │
-    │ ✓ Lote Pollos Rojos (70)   │
-    │ ✓ Lote Conejos (45)        │
-    │ ✓ Lote Carne Cerdo (400)   │
+    │ * Lote Pollos Rojos (70)   │
+    │ * Lote Conejos (45)        │
+    │ * Lote Carne Cerdo (400)   │
     └────────────┬───────────────┘
                  │
                  ▼ Usuario selecciona
@@ -489,8 +489,8 @@ Tablas adicionales:
     │ SELECT clientes            │
     │ WHERE usuario_id = 1       │
     │                            │
-    │ ✓ Supermercado A           │
-    │ ✓ Restaurante B            │
+    │ * Supermercado A           │
+    │ * Restaurante B            │
     └────────────┬───────────────┘
                  │
                  ▼ Usuario selecciona
@@ -508,13 +508,13 @@ Tablas adicionales:
                  │
                  ▼
     ┌────────────────────────────┐
-    │ ✅ Venta registrada        │
+    │ Venta registrada           │
     └────────────────────────────┘
 ```
 
 ---
 
-## 📞 Soporte
+## Soporte
 
 **¿Problemas con las migraciones?**
 1. Revisa logs en consola
@@ -526,4 +526,4 @@ Tablas adicionales:
 
 **Última actualización:** 27 de Diciembre de 2025  
 **Sistema:** Profesional con tracking automático  
-**Estado:** ✅ Listo para usar
+**Estado:** Listo para usar
