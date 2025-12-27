@@ -62,7 +62,23 @@ export const AuthUserController = async (req, res) => {
             return res.status(401).json({ message: "Credenciales inválidas" });
         }
 
-        // 6. Login exitoso - Generar tokens JWT
+        // 6. ACTUALIZAR ULTIMO_LOGIN - Esto invalida todos los tokens anteriores
+        // Al actualizar ultimo_login, todos los tokens emitidos antes de esta fecha quedan invalidados
+        await pool.query(
+            `UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?`,
+            [usuario.id]
+        );
+
+        // 7. REVOCAR TODAS LAS SESIONES ANTERIORES DEL USUARIO
+        // Esto invalida todos los refresh tokens anteriores cuando el usuario hace login
+        await pool.query(
+            `UPDATE refresh_tokens 
+            SET revocado = TRUE, revocado_en = NOW() 
+            WHERE usuario_id = ? AND revocado = FALSE`,
+            [usuario.id]
+        );
+
+        // 8. Login exitoso - Generar tokens JWT
         const accessToken = generateAccessToken({
             id: usuario.id,
             correo: usuario.correo
@@ -72,7 +88,7 @@ export const AuthUserController = async (req, res) => {
             id: usuario.id
         });
 
-        // 7. Guardar refresh token en la base de datos
+        // 9. Guardar nuevo refresh token en la base de datos
         const clientInfo = getClientInfo(req);
         const expiresAt = calculateRefreshTokenExpiry();
 

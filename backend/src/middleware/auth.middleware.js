@@ -1,11 +1,13 @@
 import { verifyAccessToken } from '../utils/jwt.util.js';
+import { pool } from '../database/conexion.js';
 
 /**
  * Middleware para verificar ACCESS TOKENS
  * RECHAZA refresh tokens - solo acepta access tokens válidos
+ * Verifica que el usuario tenga al menos una sesión activa (refresh token no revocado)
  */
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
     try {
         // Obtener token del header Authorization
         const authHeader = req.headers.authorization;
@@ -31,6 +33,31 @@ export const verifyToken = (req, res, next) => {
 
         const decoded = verifyAccessToken(token);
         
+        // VALIDACIÓN CRÍTICA: Verificar que el token fue emitido después del último login
+        // Esto invalida automáticamente todos los tokens anteriores cuando el usuario vuelve a hacer login
+        const [userResult] = await pool.query(
+            `SELECT ultimo_login FROM usuarios WHERE id = ? LIMIT 1`,
+            [decoded.id]
+        );
+
+        if (userResult.length === 0) {
+            return res.status(401).json({ 
+                message: "Usuario no encontrado.",
+                code: "USER_NOT_FOUND"
+            });
+        }
+
+        const ultimoLogin = userResult[0].ultimo_login;
+        const tokenIssuedAt = decoded.iat * 1000; // Convertir segundos a milisegundos
+        
+        // Si el token fue emitido antes del último login, está invalidado
+        if (ultimoLogin && tokenIssuedAt < new Date(ultimoLogin).getTime()) {
+            return res.status(401).json({ 
+                message: "Token invalidado. Se detectó un nuevo inicio de sesión. Por favor, inicia sesión nuevamente.",
+                code: "TOKEN_INVALIDATED"
+            });
+        }
+
         req.user = {
             id: decoded.id,
             correo: decoded.correo
