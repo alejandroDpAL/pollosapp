@@ -55,7 +55,7 @@ server.use(hpp());
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:19006', 
-    'http://192.168.1.100:19006',
+    'http://192.168.100.11:19006',
     
 ];
 

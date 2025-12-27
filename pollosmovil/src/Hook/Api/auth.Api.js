@@ -8,22 +8,28 @@ export const loginUser = async (user, password) => {
       password
     });
 
-    // Extraer los datos del usuario de la respuesta del backend
-    const { message, user: userData } = response.data;
+    // Extraer datos completos del backend (user, accessToken, refreshToken)
+    const { message, user: userData, accessToken, refreshToken } = response.data;
 
-    // Verificar que tengamos el ID del usuario
+    // Verificar que tengamos todos los datos necesarios
     if (!userData || !userData.id) {
       throw new Error("Error de autenticación: No se recibió información del usuario");
     }
 
-    // Retornar los datos estructurados
+    if (!accessToken || !refreshToken) {
+      throw new Error("Error de autenticación: No se recibieron los tokens");
+    }
+
+    // Retornar los datos estructurados con tokens
     return {
       success: true,
       message: message || "Autenticación exitosa",
       user: {
         id: userData.id,
-        correo: user, // Guardamos el correo usado para el login
-      }
+        correo: user,
+      },
+      accessToken,
+      refreshToken
     };
   } catch (error) {
     // Manejo de errores según el backend

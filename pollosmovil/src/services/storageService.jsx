@@ -1,14 +1,20 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const StorageService = () => {
-    return (
-        <View>
-            
-        </View>
-    );
-}
+export const saveTokens = async (accessToken, refreshToken) => {
+  await AsyncStorage.multiSet([
+    ['accessToken', accessToken],
+    ['refreshToken', refreshToken],
+  ]);
+};
 
-const styles = StyleSheet.create({})
+export const getAccessToken = async () => {
+  return await AsyncStorage.getItem('accessToken');
+};
 
-export default StorageService;
+export const getRefreshToken = async () => {
+  return await AsyncStorage.getItem('refreshToken');
+};
+
+export const clearTokens = async () => {
+  await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+};
