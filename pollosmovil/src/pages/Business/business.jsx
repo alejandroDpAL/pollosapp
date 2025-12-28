@@ -23,6 +23,7 @@ const Business = ({ navigation }) => {
   const [modalEstadoVisible, setModalEstadoVisible] = useState(false);
   const indicator = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
+  const barScrollViewRef = useRef(null);
   const tabRefs = useRef({});
 
   useEffect(() => {
@@ -77,10 +78,19 @@ const Business = ({ navigation }) => {
       useNativeDriver: false,
     }).start();
 
+    const offsetX = index * TAB_WIDTH - (width / 2) + (TAB_WIDTH / 2);
+    const scrollX = Math.max(0, offsetX);
+
     if (scrollViewRef.current) {
-      const offsetX = index * TAB_WIDTH - (width / 2) + (TAB_WIDTH / 2);
       scrollViewRef.current.scrollTo({
-        x: Math.max(0, offsetX),
+        x: scrollX,
+        animated: true
+      });
+    }
+
+    if (barScrollViewRef.current) {
+      barScrollViewRef.current.scrollTo({
+        x: scrollX,
         animated: true
       });
     }
@@ -203,6 +213,7 @@ const Business = ({ navigation }) => {
 
         <View style={styles.barContainer}>
           <ScrollView
+            ref={barScrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
@@ -293,7 +304,7 @@ const Business = ({ navigation }) => {
         </ScrollView>
       )}
 
-      <Boton />
+      <Boton onVentaRegistrada={cargarVentas} />
 
       {/* Modal de Detalles con DraggableModal */}
       <DraggableModal
@@ -472,7 +483,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 8,
-    paddingHorizontal: 12,
   },
   tabText: {
     fontSize: 15,
@@ -481,7 +491,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   tabActive: {
-    color: "#0077cc",
+    color: "#0095ffff",
     fontWeight: "700",
   },
   barContainer: {
@@ -491,6 +501,8 @@ const styles = StyleSheet.create({
   },
   barContent: {
     height: 6,
+    minWidth: TAB_WIDTH * tabs.length + 20,
+    paddingHorizontal: 10,
   },
   barActive: {
     height: 6,
@@ -579,7 +591,7 @@ const styles = StyleSheet.create({
   },
   valorText: {
     fontSize: 16,
-    color: "#0077cc",
+    color: "#11cc00ff",
     fontWeight: "700",
     flex: 1,
   },
@@ -667,7 +679,7 @@ const styles = StyleSheet.create({
   },
   modalValueDestacado: {
     fontSize: 20,
-    color: "#0077cc",
+    color: "#0095ffff",
     fontWeight: "700",
   },
   observacionesContainer: {

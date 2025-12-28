@@ -9,3 +9,13 @@ export const getVentasAdmin = async (IdAdnmin) => {
     return [];
   }
 };
+
+export const registrarVenta = async (ventaData) => {
+  try {
+    const response = await api.post('/ventas/registrar', ventaData);
+    return response.data;
+  } catch (error) {
+    console.error("Error al registrar venta:", error);
+    throw error;
+  }
+};

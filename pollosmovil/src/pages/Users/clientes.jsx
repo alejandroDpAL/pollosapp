@@ -75,10 +75,10 @@ const Clients = () => {
 
       if (isEditing && selectedClient) {
         await updateClient(selectedClient.id, formData);
-        message = "Cliente actualizado con exito ✅"
+        message = "Cliente actualizado con exito "
       } else {
         await createClient({ ...formData, usuarioId: user.id });
-        message = "Cliente registrado con exito ✅"
+        message = "Cliente registrado con exito "
       }
 
 

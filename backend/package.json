@@ -6,10 +6,18 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "migrate": "node src/database/run-migration.js",
-    "migrate:db": "node src/database/migrate.js migrate",
-    "migrate:verify": "node src/database/migrate.js verify",
-    "migrate:info": "node src/database/migrate.js info"
+    "migrate": "node src/database/migrate.js",
+    "migrate:seed": "node src/database/migrate.js --seed",
+    "seed": "node src/database/migrate.js --seed",
+    "db:status": "node src/database/migrate.js",
+    "db:demo": "node src/database/migrate.js --seed",
+    "db:seed:demo": "node src/database/migrate.js && mysql -u %DB_USER% -p%DB_PASSWORD% %DB_DATABASE% < src/database/migrations/seed_datos_dump.sql",
+    "db:restore:dump": "node src/database/restore-dump.js",
+    "db:rollback": "node src/database/restore-dump.js",
+    "db:migrate:rollback": "node src/database/migrate.js --down",
+    "db:migrate:rollback:1": "node src/database/migrate.js --down=1",
+    "db:migrate:to": "node src/database/migrate.js --to",
+    "test:migrations": "node src/database/test-migrations.js"
   },
   "keywords": [],
   "author": "",

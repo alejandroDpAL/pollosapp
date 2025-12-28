@@ -4,7 +4,6 @@ import { ActualizarVentas, CrearVentaConproducto, CrearVentas, EliminarVentas, g
 import { validateCreateVenta, validateUpdateVenta, validateVentaId, validateUsuarioId, validateClienteId } from "../middleware/validators.js";
 const routeVentas = Router()
 
-// Todas las rutas requieren autenticación
 routeVentas.get('/listar', verifyToken, listarVentas)
 routeVentas.get('/usuario/:usuario_id', verifyToken, validateUsuarioId, listarVentasPorUsuario)
 routeVentas.get('/cliente/:cliente_id', verifyToken, validateClienteId, listarVentasPorCliente)
