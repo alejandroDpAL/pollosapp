@@ -1,17 +1,20 @@
 import { Router } from "express";
 import { verifyToken } from "../middleware/auth.middleware.js";
-import { ActualizarVentas, crearVenta, EliminarVentas, get_negocios_por_usuario, listarVentas, listarVentasPorCliente, listarVentasPorUsuario, ObtenerDetalleVenta, ObtenerVentasDeProducto } from "../controllers/controler.ventas.js";
-
+import { ActualizarVentas, CrearVentaConproducto, CrearVentas, EliminarVentas, get_negocios_por_usuario, listarVentas, listarVentasPorCliente, listarVentasPorClienteNuevoEnpoint, listarVentasPorUsuario, ObtenerDetalleVenta, ObtenerVentasDeProducto } from "../controllers/controler.ventas.js";
+import { validateCreateVenta, validateUpdateVenta, validateVentaId, validateUsuarioId, validateClienteId } from "../middleware/validators.js";
 const routeVentas = Router()
 
 routeVentas.get('/listar', verifyToken, listarVentas)
-routeVentas.get('/usuario/:usuario_id', verifyToken, listarVentasPorUsuario)
-routeVentas.get('/cliente/:cliente_id', verifyToken, listarVentasPorCliente)
-routeVentas.post('/registrar', verifyToken, crearVenta)
-routeVentas.put('/actualizar/:id_venta', verifyToken, ActualizarVentas)
-routeVentas.delete('/eliminar/:id_venta', verifyToken, EliminarVentas)
-routeVentas.get("/negocios/usuario/:usuario_id", verifyToken, get_negocios_por_usuario)
-routeVentas.get("/detalle/:id", verifyToken, ObtenerDetalleVenta)
-routeVentas.get("/productos/:id/ventas", verifyToken, ObtenerVentasDeProducto)
+routeVentas.get('/usuario/:usuario_id', verifyToken, validateUsuarioId, listarVentasPorUsuario)
+routeVentas.get('/cliente/:cliente_id', verifyToken, validateClienteId, listarVentasPorCliente)
+routeVentas.post('/registrar', verifyToken, validateCreateVenta, CrearVentas)
+routeVentas.put('/actualizar/:id_venta', verifyToken, validateUpdateVenta, ActualizarVentas)
+routeVentas.delete('/eliminar/:id_venta', verifyToken, validateVentaId, EliminarVentas)
+routeVentas.get("/negocios/usuario/:usuario_id", verifyToken, validateUsuarioId, get_negocios_por_usuario);
+routeVentas.post("/ventas/registrada", verifyToken, validateCreateVenta, CrearVentaConproducto);
+routeVentas.get("/detalle/:id", verifyToken, ObtenerDetalleVenta);
+routeVentas.get("/productos/:id/ventas", verifyToken, ObtenerVentasDeProducto);
+routeVentas.get('/clientes/:cliente_id/ventas', verifyToken, validateClienteId, listarVentasPorClienteNuevoEnpoint);
+
 
 export default routeVentas
