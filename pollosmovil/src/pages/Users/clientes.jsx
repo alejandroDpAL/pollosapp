@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HeaderPrincipal from "../../components/layout/header";
 import Modal from "../../components/common/Modal.componet";
+import ModalAlert from "../../components/common/Modal.Alet.jsx";
 import {
   createClient,
   updateClient,
@@ -17,6 +18,7 @@ const Clients = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -36,7 +38,13 @@ const Clients = () => {
         setClients(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error al obtener los clientes:", err);
-        Alert.alert("Error", "No se pudieron cargar los clientes del usuario.");
+        setAlertModal({
+          visible: true,
+          title: 'Error',
+          message: 'No se pudieron cargar los clientes del usuario.',
+          type: 'error',
+          onConfirm: null
+        });
       }
     };
 
@@ -65,7 +73,13 @@ const Clients = () => {
   // Guardar o actualizar cliente
   const handleSaveClient = async () => {
     if (!formData.nombre || !formData.telefono) {
-      Alert.alert("Campos incompletos", "Por favor completa los campos requeridos.");
+      setAlertModal({
+        visible: true,
+        title: 'Campos incompletos',
+        message: 'Por favor completa los campos requeridos.',
+        type: 'error',
+        onConfirm: null
+      });
       return;
     }
 
@@ -87,11 +101,23 @@ const Clients = () => {
       setClients(Array.isArray(updatedClients) ? updatedClients : []);
       setModalVisible(false);
       resetForm();
-      Alert.alert("Éxito", message)
+      setAlertModal({
+        visible: true,
+        title: 'Éxito',
+        message: message,
+        type: 'success',
+        onConfirm: null
+      });
 
     } catch (error) {
       console.error("Error al guardar el cliente:", error);
-      Alert.alert("Error", "No se pudo actualizar el cliente. Intenta nuevamente.");
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'No se pudo actualizar el cliente. Intenta nuevamente.',
+        type: 'error',
+        onConfirm: null
+      });
     }
   };
 
@@ -105,23 +131,29 @@ const Clients = () => {
 
   // Eliminar cliente
   const handleDeleteClient = (client) => {
-    Alert.alert("Eliminar cliente", `¿Deseas eliminar a ${client.nombre}?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteClient(client.id);
-            const updatedClients = await getClientById(user.id);
-            setClients(Array.isArray(updatedClients) ? updatedClients : []);
-          } catch (err) {
-            console.error("Error al eliminar cliente:", err);
-            Alert.alert("Error", "No se pudo eliminar el cliente.");
-          }
-        },
-      },
-    ]);
+    setAlertModal({
+      visible: true,
+      title: 'Eliminar cliente',
+      message: `¿Deseas eliminar a ${client.nombre}?`,
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          await deleteClient(client.id);
+          const updatedClients = await getClientById(user.id);
+          setClients(Array.isArray(updatedClients) ? updatedClients : []);
+          setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
+        } catch (err) {
+          console.error("Error al eliminar cliente:", err);
+          setAlertModal({
+            visible: true,
+            title: 'Error',
+            message: 'No se pudo eliminar el cliente.',
+            type: 'error',
+            onConfirm: null
+          });
+        }
+      }
+    });
   };
 
   const navigation = useNavigation()
@@ -130,7 +162,7 @@ const Clients = () => {
     <>
       <HeaderPrincipal title="Gestión de Clientes" />
 
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         {clients.length === 0 ? (
           <Text style={styles.emptyText}>No hay clientes registrados para este usuario.</Text>
         ) : (
@@ -215,6 +247,15 @@ const Clients = () => {
         }}
         onSave={handleSaveClient}
       />
+
+      <ModalAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+        onConfirm={alertModal.onConfirm}
+      />
     </>
   );
 };
@@ -227,6 +268,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f4f6f8",
     padding: 18,
+  },
+  scrollContent: {
+    paddingBottom:60,
   },
   card: {
     backgroundColor: "#ffffff",

@@ -180,11 +180,11 @@ export const get_lotesByUsuario = async (req, res) => {
       FROM lotes l
       INNER JOIN productos p ON l.producto_id = p.id
       INNER JOIN negocio n ON p.negocio_id = n.id
-      WHERE l.cantidad_actual > 0
+      WHERE n.usuario_id = ? AND l.cantidad_actual > 0
       ORDER BY l.fecha DESC
     `;
     
-    const [rows] = await pool.query(sql);
+    const [rows] = await pool.query(sql, [usuario_id]);
 
     if (rows.length > 0) {
       res.status(200).json(rows);
@@ -201,11 +201,12 @@ export const get_lotesByUsuario = async (req, res) => {
         FROM lotes l
         INNER JOIN productos p ON l.producto_id = p.id
         INNER JOIN negocio n ON p.negocio_id = n.id
+        WHERE n.usuario_id = ?
         ORDER BY l.fecha DESC
         LIMIT 5
       `;
       
-      const [allLotes] = await pool.query(sqlDiag);
+      const [allLotes] = await pool.query(sqlDiag, [usuario_id]);
       
       res.status(404).json({
         message: "No se encontraron lotes con stock disponible.",
@@ -239,7 +240,7 @@ export const ObtenerDetalleLote = async (req, res) => {
       return res.status(400).json({ message: "Se requiere el ID del lote." });
     }
 
-    // Datos principales del lote + producto
+   
     const sqlLote = `
       SELECT
         l.id AS lote_id,
@@ -252,10 +253,13 @@ export const ObtenerDetalleLote = async (req, res) => {
 
         p.id AS producto_id,
         p.nombre AS producto_nombre,
-        p.cantidad AS producto_stock_total,
-        p.costo AS producto_costo
+
+        n.id AS negocio_id,
+        n.nombre AS negocio_nombre,
+        n.usuario_id
       FROM lotes l
-      LEFT JOIN productos p ON l.producto_id = p.id
+      INNER JOIN productos p ON l.producto_id = p.id
+      INNER JOIN negocio n ON p.negocio_id = n.id
       WHERE l.id = ?
     `;
 

@@ -7,12 +7,12 @@ import {
   TextInput,
   ScrollView,
   Image,
-  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HeaderPrincipal from "../../components/layout/header";
 import Modal from "../../components/common/Modal.componet";
 import DraggableModal from "../../components/common/DraggableModal";
+import ModalAlert from "../../components/common/Modal.Alet.jsx";
 import { getProducts } from "../../Hook/Api/productApi";
 
 const Productos = () => {
@@ -21,6 +21,7 @@ const Productos = () => {
   const [modalDeleteVisible, setModalDeleteVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState(null);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -70,7 +71,13 @@ const Productos = () => {
 
   const handleSaveProducto = () => {
     if (!formData.nombre || !formData.costo) {
-      Alert.alert("Campos incompletos", "Por favor completa el nombre y costo.");
+      setAlertModal({
+        visible: true,
+        title: 'Campos incompletos',
+        message: 'Por favor completa el nombre y costo.',
+        type: 'error',
+        onConfirm: null
+      });
       return;
     }
 
@@ -81,14 +88,26 @@ const Productos = () => {
           p.id === selectedProducto.id ? { ...p, ...formData } : p
         )
       );
-      Alert.alert("Éxito", "Producto actualizado correctamente");
+      setAlertModal({
+        visible: true,
+        title: 'Éxito',
+        message: 'Producto actualizado correctamente',
+        type: 'success',
+        onConfirm: null
+      });
     } else {
       // Agregar nuevo producto
       setProductos((prev) => [
         ...prev,
         { id: Date.now(), negocio_id: 1, ...formData },
       ]);
-      Alert.alert("Éxito", "Producto agregado correctamente");
+      setAlertModal({
+        visible: true,
+        title: 'Éxito',
+        message: 'Producto agregado correctamente',
+        type: 'success',
+        onConfirm: null
+      });
     }
 
     setModalFormVisible(false);
@@ -111,7 +130,13 @@ const Productos = () => {
     if (selectedProducto) {
       setProductos((prev) => prev.filter((p) => p.id !== selectedProducto.id));
       setModalDeleteVisible(false);
-      Alert.alert("Éxito", "Producto eliminado correctamente");
+      setAlertModal({
+        visible: true,
+        title: 'Éxito',
+        message: 'Producto eliminado correctamente',
+        type: 'success',
+        onConfirm: null
+      });
       setSelectedProducto(null);
     }
   };
@@ -311,6 +336,15 @@ const Productos = () => {
           setSelectedProducto(null);
         }}
         onSave={handleConfirmDelete}
+      />
+
+      <ModalAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+        onConfirm={alertModal.onConfirm}
       />
     </>
   );

@@ -85,6 +85,58 @@ export const listarVentasPorUsuario = async (req, res) => {
   }
 };
 
+// Listar ventas por negocio
+export const listarVentasPorNegocio = async (req, res) => {
+  const { negocio_id } = req.params;
+
+  try {
+    if (!negocio_id) {
+      return res.status(400).json({
+        message: "El ID del negocio es obligatorio."
+      });
+    }
+
+    const sql = `
+      SELECT 
+        v.id,
+        v.usuario_id,
+        v.producto_id,
+        u.nombre AS nombre_usuario,
+        c.nombre AS nombre_cliente,
+        l.nombre AS nombre_lote,
+        p.nombre AS nombre_producto,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+        v.observaciones,
+        v.estado
+      FROM ventas v
+      INNER JOIN usuarios u ON v.usuario_id = u.id
+      INNER JOIN clientes c ON v.cliente_id = c.id
+      INNER JOIN lotes l ON v.lote_id = l.id
+      INNER JOIN productos p ON v.producto_id = p.id
+      WHERE p.negocio_id = ?
+      ORDER BY v.fecha DESC;
+    `;
+
+    const [result] = await pool.query(sql, [negocio_id]);
+
+    if (result.length > 0) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).json({
+        message: "No se encontraron ventas para este negocio.",
+      });
+    }
+  } catch (error) {
+    console.error("Error al listar ventas por negocio:", error);
+    res.status(500).json({
+      message: "Error en el servidor: " + error.message,
+    });
+  }
+};
+
 export const ActualizarVentas = async (req, res) => {
   const { id_venta } = req.params;
   const { lote_id, cliente_id, usuario_id, cantidad, precio_unitario, fecha, observaciones } = req.body;
@@ -131,13 +183,13 @@ export const EliminarVentas = async (req, res) => {
   try {
     const { id_venta } = req.params;
 
-    let sql = "DELETE FROM ventas WHERE id_venta = ?";
+    let sql = "DELETE FROM ventas WHERE id = ?";
 
     const [result] = await pool.query(sql, [id_venta]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({
-        message: "Venta eliminado con exito.",
+        message: "Venta eliminada con exito.",
       });
     } else {
       res.status(404).json({
@@ -162,22 +214,34 @@ export const get_negocios_por_usuario = async (req, res) => {
       });
     }
 
-    // Como la tabla negocio NO tiene usuario_id en la estructura actual,
-    // esta consulta devuelve TODOS los negocios activos
-    // TODO: Agregar campo usuario_id a la tabla negocio en la BD
+   
     const sql = `
-      SELECT *
-      FROM negocio
-      WHERE activo = 1
+      SELECT 
+        n.id AS negocio_id,
+        n.nombre AS negocio_nombre,
+        n.descripcion,
+        n.activo,
+        n.logo,
+        n.correo,
+        n.telefono,
+        COUNT(p.id) AS total_productos,
+        COUNT(l.id) AS total_lotes,
+        n.usuario_id
+      FROM negocio n
+      LEFT JOIN productos p ON n.id = p.negocio_id
+      LEFT JOIN lotes l ON p.id = l.producto_id
+      WHERE n.usuario_id = ? AND n.activo = 1
+      GROUP BY n.id
+      ORDER BY n.nombre ASC
     `;
 
-    const [rows] = await pool.query(sql);
+    const [rows] = await pool.query(sql, [usuario_id]);
 
     if (rows.length > 0) {
       return res.status(200).json(rows);
     } else {
       return res.status(404).json({
-        message: "No se encontraron negocios activos."
+        message: "No se encontraron negocios para este usuario."
       });
     }
   } catch (error) {
@@ -251,18 +315,13 @@ export const crearVenta = async (req, res) => {
 
     // VALIDAR LOTE
     const [lote] = await connection.query(
-      "SELECT cantidad_actual, activo FROM lotes WHERE id = ?",
+      "SELECT cantidad_actual FROM lotes WHERE id = ?",
       [lote_id]
     );
 
     if (lote.length === 0) {
       await connection.rollback();
       return res.status(404).json({ message: "El lote no existe." });
-    }
-
-    // VALIDAR QUE EL LOTE ESTÉ ACTIVO 
-    if (lote[0].activo === 0) {
-      return res.status(400).json({ message: "El lote está inactivo y no permite ventas." });
     }
 
     const stockActual = lote[0].cantidad_actual;
@@ -622,4 +681,169 @@ export const listarVentasPorCliente = async (req, res) => {
   }
 };
 
+
+
+export const ObtenerTrazabilidadVenta = async (req, res) => {
+  const { id_venta } = req.params;
+
+  try {
+    if (!id_venta || isNaN(id_venta)) {
+      return res.status(400).json({
+        message: "El ID de la venta es requerido y debe ser válido."
+      });
+    }
+
+    const sql = `
+      SELECT 
+        v.id AS venta_id,
+        v.cantidad,
+        v.precio_unitario,
+        v.valor_total,
+        v.fecha,
+        v.estado,
+        v.observaciones,
+        v.fecha_creacion,
+        v.fecha_actualizacion,
+        
+        u.id AS usuario_id,
+        u.nombre AS usuario_nombre,
+        u.correo AS usuario_correo,
+        u.cargo AS usuario_cargo,
+        
+        n.id AS negocio_id,
+        n.nombre AS negocio_nombre,
+        n.descripcion AS negocio_descripcion,
+        
+        pr.id AS producto_id,
+        pr.nombre AS producto_nombre,
+        
+        l.id AS lote_id,
+        l.nombre AS lote_nombre,
+        l.cantidad_inicial,
+        l.cantidad_actual,
+        l.precio AS precio_lote,
+        
+        c.id AS cliente_id,
+        c.nombre AS cliente_nombre,
+        c.telefono AS cliente_telefono,
+        c.correo AS cliente_correo,
+        c.direccion AS cliente_direccion
+      FROM ventas v
+      INNER JOIN usuarios u ON v.usuario_id = u.id
+      INNER JOIN lotes l ON v.lote_id = l.id
+      INNER JOIN productos pr ON l.producto_id = pr.id
+      INNER JOIN negocio n ON pr.negocio_id = n.id
+      LEFT JOIN clientes c ON v.cliente_id = c.id
+      WHERE v.id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [id_venta]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Venta no encontrada."
+      });
+    }
+
+    const venta = rows[0];
+
+    // Retornar con estructura clara para trazabilidad
+    return res.status(200).json({
+      venta_id: venta.venta_id,
+      trazabilidad: {
+        usuario: {
+          id: venta.usuario_id,
+          nombre: venta.usuario_nombre,
+          correo: venta.usuario_correo,
+          cargo: venta.usuario_cargo
+        },
+        negocio: {
+          id: venta.negocio_id,
+          nombre: venta.negocio_nombre,
+          descripcion: venta.negocio_descripcion
+        },
+        producto: {
+          id: venta.producto_id,
+          nombre: venta.producto_nombre
+        },
+        lote: {
+          id: venta.lote_id,
+          nombre: venta.lote_nombre,
+          cantidad_inicial: venta.cantidad_inicial,
+          cantidad_actual: venta.cantidad_actual,
+          precio: venta.precio_lote
+        },
+        cliente: {
+          id: venta.cliente_id,
+          nombre: venta.cliente_nombre,
+          telefono: venta.cliente_telefono,
+          correo: venta.cliente_correo,
+          direccion: venta.cliente_direccion
+        }
+      },
+      venta_detalles: {
+        cantidad: venta.cantidad,
+        precio_unitario: venta.precio_unitario,
+        valor_total: venta.valor_total,
+        estado: venta.estado,
+        fecha: venta.fecha,
+        observaciones: venta.observaciones,
+        fecha_creacion: venta.fecha_creacion,
+        fecha_ultima_actualizacion: venta.fecha_actualizacion
+      }
+    });
+
+  } catch (error) {
+    console.error("Error al obtener trazabilidad de venta:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
+};
+
+
+export const actualizarEstadoVenta = async (req, res) => {
+  const { id } = req.params;
+  const { estado } = req.body;
+
+  try {
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ message: "El ID de la venta es requerido y debe ser válido." });
+    }
+
+    if (!estado) {
+      return res.status(400).json({ message: "El estado es requerido." });
+    }
+
+    const estadosValidos = ['pendiente', 'pagado', 'anulado'];
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}` });
+    }
+
+    const sql = `
+      UPDATE ventas
+      SET estado = ?
+      WHERE id = ?
+    `;
+
+    const [result] = await pool.query(sql, [estado, id]);
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ 
+        message: `La venta fue ${estado === 'anulado' ? 'anulada' : 'actualizada'} correctamente.`,
+        venta_id: id,
+        nuevo_estado: estado
+      });
+    } else {
+      res.status(404).json({ message: "No se encontró la venta para actualizar." });
+    }
+  } catch (error) {
+    console.error("Error al actualizar estado de venta:", error);
+    res.status(500).json({
+      message: "Ocurrió un error interno al actualizar el estado de la venta.",
+      error: error.message,
+    });
+  }
+};
 

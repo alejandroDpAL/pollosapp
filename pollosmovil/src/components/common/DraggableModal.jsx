@@ -8,6 +8,7 @@ import {
     Animated,
     PanResponder,
     Dimensions,
+    ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -26,6 +27,8 @@ const DraggableModal = ({
     closeThreshold = 100,
     headerStyle = {},
     contentStyle = {},
+    scrollable = true,
+    scrollProps = {},
 }) => {
     const modalHeight = useRef(new Animated.Value(height * initialHeight)).current;
     const [isDragging, setIsDragging] = useState(false);
@@ -114,11 +117,21 @@ const DraggableModal = ({
                     )}
 
                     {/* Contenido del modal */}
-                    <View
-                        style={styles.content}
-                    >
-                        {children}
-                    </View>
+                    {scrollable ? (
+                        <ScrollView
+                            style={[styles.content, contentStyle]}
+                            contentContainerStyle={styles.contentContainer}
+                            nestedScrollEnabled
+                            keyboardShouldPersistTaps="handled"
+                            {...scrollProps}
+                        >
+                            {children}
+                        </ScrollView>
+                    ) : (
+                        <View style={[styles.content, contentStyle]}>
+                            {children}
+                        </View>
+                    )}
                 </Animated.View>
             </View>
         </Modal>

@@ -131,22 +131,21 @@ export const get_negocios_por_usuario = async (req, res) => {
       });
     }
 
-    // Como la tabla negocio NO tiene usuario_id en la estructura actual,
-    // esta consulta devuelve TODOS los negocios activos
-    // TODO: Agregar campo usuario_id a la tabla negocio en la BD
+    
     const sql = `
       SELECT *
       FROM negocio
-      WHERE activo = 1
+      WHERE usuario_id = ? AND activo = 1
+      ORDER BY nombre ASC
     `;
 
-    const [rows] = await pool.query(sql);
+    const [rows] = await pool.query(sql, [usuario_id]);
 
     if (rows.length > 0) {
       return res.status(200).json(rows);
     } else {
       return res.status(404).json({
-        message: "No se encontraron negocios activos."
+        message: "No se encontraron negocios para este usuario."
       });
     }
   } catch (error) {
@@ -237,6 +236,160 @@ export const InfoNegocio = async (req, res) => {
     console.log(error);
     res.status(500).json({
       message: "Error al obtener la información del negocio.",
+      error: error.message
+    });
+  }
+};
+
+
+export const anularNegocio = async (req, res) => {
+  const { id } = req.params;
+  const { usuario_id } = req.body;
+
+  try {
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        message: "El ID del negocio es requerido y debe ser válido."
+      });
+    }
+
+    if (!usuario_id) {
+      return res.status(400).json({
+        message: "El ID del usuario es requerido."
+      });
+    }
+
+    // Verificar que el negocio pertenece al usuario
+    const [negocio] = await pool.query(
+      "SELECT * FROM negocio WHERE id = ? AND usuario_id = ?",
+      [id, usuario_id]
+    );
+
+    if (negocio.length === 0) {
+      return res.status(404).json({
+        message: "No tienes permiso para anular este negocio."
+      });
+    }
+
+    // Anular todas las ventas activas de este negocio
+    const updateVentasSql = `
+      UPDATE ventas v
+      INNER JOIN productos p ON v.producto_id = p.id
+      SET v.estado = 'anulado'
+      WHERE p.negocio_id = ? AND v.estado != 'anulado'
+    `;
+    
+    const [ventasResult] = await pool.query(updateVentasSql, [id]);
+    console.log(`Se anularon ${ventasResult.affectedRows} ventas para el negocio ${id}`);
+
+    // Cambiar estado del negocio a inactivo
+    const [result] = await pool.query(
+      "UPDATE negocio SET activo = 0 WHERE id = ? AND usuario_id = ?",
+      [id, usuario_id]
+    );
+
+    if (result.affectedRows > 0) {
+      return res.status(200).json({
+        message: "Negocio cerrado exitosamente. Se anularon todas las ventas activas.",
+        negocioId: id,
+        ventasAnuladas: ventasResult.affectedRows
+      });
+    } else {
+      return res.status(400).json({
+        message: "No se pudo cerrar el negocio. Intenta nuevamente."
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al anular negocio:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
+};
+
+// DELETE - Eliminar negocio 
+export const deleteNegocio = async (req, res) => {
+  const { id } = req.params;
+  const { usuario_id } = req.body;
+
+  try {
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        message: "El ID del negocio es requerido y debe ser válido."
+      });
+    }
+
+    if (!usuario_id) {
+      return res.status(400).json({
+        message: "El ID del usuario es requerido."
+      });
+    }
+
+    // Verificar que el negocio pertenece al usuario
+    const [negocio] = await pool.query(
+      "SELECT * FROM negocio WHERE id = ? AND usuario_id = ?",
+      [id, usuario_id]
+    );
+
+    if (negocio.length === 0) {
+      return res.status(404).json({
+        message: "No tienes permiso para eliminar este negocio."
+      });
+    }
+
+    // Verificar si el negocio tiene ventas activas
+    const [ventas] = await pool.query(`
+      SELECT COUNT(*) as total_ventas
+      FROM ventas v
+      INNER JOIN productos p ON v.producto_id = p.id
+      WHERE p.negocio_id = ? AND v.estado != 'anulado'
+    `, [id]);
+
+    if (ventas[0].total_ventas > 0) {
+      return res.status(400).json({
+        message: `No puedes eliminar este negocio. Tiene ${ventas[0].total_ventas} venta(s) activa(s). Primero anula o elimina las ventas.`,
+        totalVentas: ventas[0].total_ventas
+      });
+    }
+
+    // Verificar si el negocio tiene lotes con stock
+    const [lotes] = await pool.query(`
+      SELECT COUNT(*) as total_lotes
+      FROM lotes l
+      INNER JOIN productos p ON l.producto_id = p.id
+      WHERE p.negocio_id = ? AND l.cantidad_actual > 0
+    `, [id]);
+
+    if (lotes[0].total_lotes > 0) {
+      return res.status(400).json({
+        message: `No puedes eliminar este negocio. Tiene ${lotes[0].total_lotes} lote(s) con stock. Primero vende o descarta el inventario.`,
+        totalLotes: lotes[0].total_lotes
+      });
+    }
+
+    // Hard delete: 
+    const [result] = await pool.query(
+      "DELETE FROM negocio WHERE id = ? AND usuario_id = ?",
+      [id, usuario_id]
+    );
+
+    if (result.affectedRows > 0) {
+      return res.status(200).json({
+        message: "Negocio eliminado exitosamente.",
+        negocioId: id
+      });
+    } else {
+      return res.status(400).json({
+        message: "No se pudo eliminar el negocio. Intenta nuevamente."
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al eliminar negocio:", error);
+    return res.status(500).json({
+      message: "Error en el servidor.",
       error: error.message
     });
   }

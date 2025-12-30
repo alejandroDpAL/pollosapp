@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HeaderPrincipal from '../../components/layout/header.jsx';
 import Menu from '../../components/common/bottom.navigation.jsx';
 import Boton from '../../components/common/bottom.plus.jsx';
 import DraggableModal from "../../components/common/DraggableModal";
-import { getVentasAdmin } from '../../Hook/Api/VentasApi.js';
+import ModalAlert from '../../components/common/Modal.Alet.jsx';
+import { getVentasPorNegocio, actualizarEstadoVenta, updateEstadoVentaQuick } from '../../Hook/Api/VentasApi.js';
 import { useAuth } from "../../Hook/context/AuthContext.jsx";
+import { useNegocio } from "../../Hook/context/NegocioContext.jsx";
 
 const { width, height } = Dimensions.get("window");
 const TAB_WIDTH = 120;
@@ -15,20 +17,26 @@ const estadosDisponibles = ["pendiente", "pagado", "anulado"];
 
 const Business = ({ navigation }) => {
   const { user } = useAuth();
+  const { negocioActivo } = useNegocio();
   const [ventas, setVentas] = useState([]);
+  const [ventasDelNegocio, setVentasDelNegocio] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("todas");
   const [modalVisible, setModalVisible] = useState(false);
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [modalEstadoVisible, setModalEstadoVisible] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
+  const [updatingEstado, setUpdatingEstado] = useState(false);
   const indicator = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
   const barScrollViewRef = useRef(null);
   const tabRefs = useRef({});
 
   useEffect(() => {
-    cargarVentas();
-  }, []);
+    if (negocioActivo?.id) {
+      cargarVentas();
+    }
+  }, [negocioActivo]);
 
   const cargarVentas = async () => {
     if (!user || !user.id) {
@@ -37,9 +45,19 @@ const Business = ({ navigation }) => {
       return;
     }
 
+    if (!negocioActivo?.id) {
+      console.error("No hay negocio activo seleccionado");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const data = await getVentasAdmin(user.id);
+      
+     
+      const data = await getVentasPorNegocio(negocioActivo.id);
+      
+      console.log(`Ventas del negocio ${negocioActivo.nombre}:`, data.length);
 
       const ventasTransformadas = data.map(venta => ({
         id: venta.id,
@@ -49,12 +67,20 @@ const Business = ({ navigation }) => {
         valor: parseFloat(venta.valor_total),
         fecha: formatearFecha(venta.fecha),
         observaciones: venta.observaciones,
-        estado: venta.estado || "pendiente"
+        estado: venta.estado || "pendiente",
+        producto_id: venta.producto_id
       }));
 
       setVentas(ventasTransformadas);
     } catch (error) {
       console.error("Error al cargar ventas:", error);
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'No se pudieron cargar las ventas del negocio',
+        type: 'error',
+        onConfirm: null
+      });
     } finally {
       setLoading(false);
     }
@@ -140,49 +166,86 @@ const Business = ({ navigation }) => {
   };
 
   const handleCambiarEstado = async (nuevoEstado) => {
+    if (!ventaSeleccionada || ventaSeleccionada.estado === nuevoEstado) return;
+    setUpdatingEstado(true);
     try {
-      // Aquí llamarías a tu API para actualizar el estado
-      // await actualizarEstadoVenta(ventaSeleccionada.id, nuevoEstado);
+      // Intentar PATCH rápido; si falla, usar PUT tradicional
+      try {
+        await updateEstadoVentaQuick(ventaSeleccionada.id, nuevoEstado);
+      } catch (e) {
+        await actualizarEstadoVenta(ventaSeleccionada.id, nuevoEstado);
+      }
 
       // Actualizar localmente
-      setVentas(ventas.map(v =>
+      setVentas(prev => prev.map(v =>
         v.id === ventaSeleccionada.id ? { ...v, estado: nuevoEstado } : v
       ));
+      setVentaSeleccionada(prev => ({ ...prev, estado: nuevoEstado }));
 
-      setVentaSeleccionada({ ...ventaSeleccionada, estado: nuevoEstado });
       setModalEstadoVisible(false);
-      Alert.alert("Éxito", "Estado actualizado correctamente");
+      setAlertModal({
+        visible: true,
+        title: 'Éxito',
+        message: `Estado actualizado a "${nuevoEstado}" correctamente`,
+        type: 'success',
+        onConfirm: null
+      });
     } catch (error) {
-      Alert.alert("Error", "No se pudo actualizar el estado");
-      console.error(error);
+      console.error('Error al actualizar estado:', error);
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: error?.response?.data?.message || 'No se pudo actualizar el estado',
+        type: 'error',
+        onConfirm: null
+      });
+    } finally {
+      setUpdatingEstado(false);
     }
   };
 
   const handleEliminar = () => {
-    Alert.alert(
-      "Confirmar eliminación",
-      "¿Estás seguro de que deseas eliminar esta venta?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Aquí llamarías a tu API para eliminar
-              // await eliminarVenta(ventaSeleccionada.id);
-
-              setVentas(ventas.filter(v => v.id !== ventaSeleccionada.id));
-              setModalVisible(false);
-              Alert.alert("Éxito", "Venta eliminada correctamente");
-            } catch (error) {
-              Alert.alert("Error", "No se pudo eliminar la venta");
-              console.error(error);
-            }
+    setAlertModal({
+      visible: true,
+      title: 'Confirmar eliminación',
+      message: '¿Estás seguro de que deseas anular esta venta?\n\nEsta acción no se puede deshacer.',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          // Anular venta en backend y reflejar en UI
+          try {
+            await updateEstadoVentaQuick(ventaSeleccionada.id, 'anulado');
+          } catch (e) {
+            await actualizarEstadoVenta(ventaSeleccionada.id, 'anulado');
           }
+
+          setVentas(prev => prev.map(v => 
+            v.id === ventaSeleccionada.id ? { ...v, estado: 'anulado' } : v
+          ));
+          setModalVisible(false);
+          setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
+
+          setTimeout(() => {
+            setAlertModal({
+              visible: true,
+              title: 'Éxito',
+              message: 'Venta anulada correctamente',
+              type: 'success',
+              onConfirm: null
+            });
+          }, 300);
+        } catch (error) {
+          setAlertModal({
+            visible: true,
+            title: 'Error',
+            message: error?.response?.data?.message || 'No se pudo anular la venta',
+            type: 'error',
+            onConfirm: null
+          });
+          console.error(error);
         }
-      ]
-    );
+      }
+    });
   };
 
   return (
@@ -431,9 +494,11 @@ const Business = ({ navigation }) => {
                   key={estado}
                   style={[
                     styles.estadoOption,
-                    ventaSeleccionada?.estado === estado && styles.estadoOptionActive
+                    ventaSeleccionada?.estado === estado && styles.estadoOptionActive,
+                    updatingEstado && { opacity: 0.6 }
                   ]}
-                  onPress={() => handleCambiarEstado(estado)}
+                  onPress={() => !updatingEstado && handleCambiarEstado(estado)}
+                  disabled={updatingEstado}
                 >
                   <Icon
                     name={getEstadoIcon(estado).name}
@@ -446,8 +511,10 @@ const Business = ({ navigation }) => {
                   ]}>
                     {estado}
                   </Text>
-                  {ventaSeleccionada?.estado === estado && (
-                    <Icon name="check" size={20} color="#0077cc" />
+                  {updatingEstado && ventaSeleccionada?.estado !== estado ? null : (
+                    ventaSeleccionada?.estado === estado ? (
+                      updatingEstado ? <ActivityIndicator size="small" color="#0077cc" /> : <Icon name="check" size={20} color="#0077cc" />
+                    ) : null
                   )}
                 </TouchableOpacity>
               ))}
@@ -455,6 +522,16 @@ const Business = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Alertas */}
+      <ModalAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+        onConfirm={alertModal.onConfirm}
+      />
     </View>
   );
 };

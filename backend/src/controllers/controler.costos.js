@@ -132,7 +132,7 @@ export const update_costos = async (req, res) => {
 
 
 
-// Obtener costos filtrados por usuario_id
+
 export const Get_costosByUsuario = async (req, res) => {
     const { usuario_id } = req.params;
 
@@ -143,7 +143,26 @@ export const Get_costosByUsuario = async (req, res) => {
             });
         }
 
-        const sql = "SELECT * FROM costos WHERE usuario_id = ?";
+        const sql = `
+            SELECT 
+                c.id,
+                c.lote_id,
+                c.nombre,
+                c.valor,
+                c.fecha_compra,
+                c.observaciones,
+                c.fecha_creacion,
+                l.nombre AS lote_nombre,
+                p.nombre AS producto_nombre,
+                n.id AS negocio_id,
+                n.nombre AS negocio_nombre
+            FROM costos c
+            INNER JOIN lotes l ON c.lote_id = l.id
+            INNER JOIN productos p ON l.producto_id = p.id
+            INNER JOIN negocio n ON p.negocio_id = n.id
+            WHERE n.usuario_id = ?
+            ORDER BY c.fecha_creacion DESC
+        `;
         const [rows] = await pool.query(sql, [usuario_id]);
 
         if (rows.length > 0) {

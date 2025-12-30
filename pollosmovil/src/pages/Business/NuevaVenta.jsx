@@ -5,33 +5,40 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DraggableModal from '../../components/common/DraggableModal';
+import ModalAlert from '../../components/common/Modal.Alet.jsx';
 import { getClientById } from '../../Hook/Api/clientApi';
 import { getLotesByUsuario } from '../../Hook/Api/lotesApi';
 import { registrarVenta } from '../../Hook/Api/VentasApi';
+import { getProductosByNegocio } from '../../Hook/Api/productApi';
 import { useAuth } from '../../Hook/context/AuthContext';
+import { useNegocio } from '../../Hook/context/NegocioContext';
 
 const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
   const { user } = useAuth();
+  const { negocioActivo } = useNegocio();
 
   const [formData, setFormData] = useState({
-    lote_id: '',
-    cliente_id: '',
+    producto_id: null,
+    lote_id: null,
+    cliente_id: null,
     cantidad: '',
     precio_unitario: '',
     observaciones: '',
   });
 
+  const [productos, setProductos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [lotes, setLotes] = useState([]);
+  const [lotesDisponibles, setLotesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
 
   useEffect(() => {
     if (visible && user?.id) {
@@ -42,22 +49,58 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
   const cargarDatos = async () => {
     setLoadingData(true);
     try {
-      const [clientesData, lotesData] = await Promise.all([
+      if (!negocioActivo?.id) {
+        throw new Error('No hay negocio seleccionado');
+      }
+
+      const [productosData, clientesData, lotesData] = await Promise.all([
+        getProductosByNegocio(negocioActivo.id),
         getClientById(user.id),
         getLotesByUsuario(user.id),
       ]);
+      
+      console.log('Productos cargados:', productosData);
+      console.log('Clientes cargados:', clientesData);
+      console.log('Lotes cargados:', lotesData);
+      
+      setProductos(productosData || []);
       setClientes(clientesData || []);
-
-      const lotesActivos = (lotesData || []).filter(
-        lote => lote.activo === 1 && lote.cantidad_actual > 0
-      );
-      setLotes(lotesActivos);
+      setLotes(lotesData || []);
+      
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los datos');
+      console.error('Error cargando datos:', error);
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'No se pudieron cargar los datos: ' + error.message,
+        type: 'error',
+        onConfirm: null
+      });
     } finally {
       setLoadingData(false);
     }
   };
+
+  // Filtrar lotes cuando se selecciona un producto
+  useEffect(() => {
+    if (formData.producto_id && lotes.length > 0) {
+      // Filtrar lotes que pertenecen al producto seleccionado
+      const lotesFiltrados = lotes.filter(lote => {
+        return lote.producto_id === formData.producto_id && lote.cantidad_actual > 0;
+      });
+      
+      console.log('Lotes filtrados por producto:', lotesFiltrados);
+      setLotesDisponibles(lotesFiltrados);
+      
+      // Resetear lote seleccionado si ya no está disponible
+      if (formData.lote_id && !lotesFiltrados.find(l => l.id === formData.lote_id)) {
+        setFormData(prev => ({ ...prev, lote_id: null }));
+      }
+    } else {
+      setLotesDisponibles([]);
+      setFormData(prev => ({ ...prev, lote_id: null }));
+    }
+  }, [formData.producto_id, lotes]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -65,43 +108,82 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
 
   const resetForm = () => {
     setFormData({
-      lote_id: '',
-      cliente_id: '',
+      producto_id: null,
+      lote_id: null,
+      cliente_id: null,
       cantidad: '',
       precio_unitario: '',
       observaciones: '',
     });
+    setLotesDisponibles([]);
   };
 
   const validarFormulario = () => {
+    if (!formData.producto_id) {
+      setAlertModal({
+        visible: true,
+        title: 'Campo requerido',
+        message: 'Debes seleccionar un producto',
+        type: 'error',
+        onConfirm: null
+      });
+      return false;
+    }
     if (!formData.lote_id) {
-      Alert.alert('Campo requerido', 'Debes seleccionar un lote');
+      setAlertModal({
+        visible: true,
+        title: 'Campo requerido',
+        message: 'Debes seleccionar un lote',
+        type: 'error',
+        onConfirm: null
+      });
       return false;
     }
     if (!formData.cliente_id) {
-      Alert.alert('Campo requerido', 'Debes seleccionar un cliente');
+      setAlertModal({
+        visible: true,
+        title: 'Campo requerido',
+        message: 'Debes seleccionar un cliente',
+        type: 'error',
+        onConfirm: null
+      });
       return false;
     }
     if (!formData.cantidad || parseFloat(formData.cantidad) <= 0) {
-      Alert.alert('Cantidad inválida', 'La cantidad debe ser mayor a 0');
+      setAlertModal({
+        visible: true,
+        title: 'Cantidad inválida',
+        message: 'La cantidad debe ser mayor a 0',
+        type: 'error',
+        onConfirm: null
+      });
       return false;
     }
     if (!formData.precio_unitario || parseFloat(formData.precio_unitario) <= 0) {
-      Alert.alert('Precio inválido', 'El precio unitario debe ser mayor a 0');
+      setAlertModal({
+        visible: true,
+        title: 'Precio inválido',
+        message: 'El precio unitario debe ser mayor a 0',
+        type: 'error',
+        onConfirm: null
+      });
       return false;
     }
 
-    const loteSeleccionado = lotes.find(
-      l => l.id === parseInt(formData.lote_id)
+    const loteSeleccionado = lotesDisponibles.find(
+      l => l.id === formData.lote_id
     );
     if (
       loteSeleccionado &&
       parseFloat(formData.cantidad) > loteSeleccionado.cantidad_actual
     ) {
-      Alert.alert(
-        'Stock insuficiente',
-        `Solo hay ${loteSeleccionado.cantidad_actual} unidades disponibles en este lote`
-      );
+      setAlertModal({
+        visible: true,
+        title: 'Stock insuficiente',
+        message: `Solo hay ${loteSeleccionado.cantidad_actual} unidades disponibles en este lote`,
+        type: 'warning',
+        onConfirm: null
+      });
       return false;
     }
 
@@ -120,9 +202,10 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
       const valorTotal = cantidad * precioUnitario;
 
       const ventaData = {
-        lote_id: parseInt(formData.lote_id),
-        cliente_id: parseInt(formData.cliente_id),
+        lote_id: formData.lote_id,
+        cliente_id: formData.cliente_id,
         usuario_id: user.id,
+        producto_id: formData.producto_id,
         cantidad: cantidad,
         precio_unitario: precioUnitario,
         valor_total: valorTotal,
@@ -132,16 +215,31 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
 
       await registrarVenta(ventaData);
 
-      Alert.alert('Éxito', 'Venta registrada correctamente');
       resetForm();
       if (onVentaRegistrada) {
         onVentaRegistrada();
       }
       onClose();
+      
+      setTimeout(() => {
+        setAlertModal({
+          visible: true,
+          title: 'Éxito',
+          message: 'Venta registrada correctamente',
+          type: 'success',
+          onConfirm: null
+        });
+      }, 300);
     } catch (error) {
       const mensaje =
         error.response?.data?.message || 'No se pudo registrar la venta';
-      Alert.alert('Error', mensaje);
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: mensaje,
+        type: 'error',
+        onConfirm: null
+      });
     } finally {
       setLoading(false);
     }
@@ -177,9 +275,18 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
           </View>
         ) : (
           <>
-            {/* Cliente */}
+            {/* Información del negocio activo */}
+            <View style={styles.negocioActivo}>
+              <Icon name="office-building" size={24} color="#0077cc" />
+              <View style={styles.negocioActivoInfo}>
+                <Text style={styles.negocioActivoLabel}>Negocio Activo:</Text>
+                <Text style={styles.negocioActivoNombre}>{negocioActivo?.nombre}</Text>
+              </View>
+            </View>
+
+            {/* PASO 1: Seleccionar Cliente */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Cliente *</Text>
+              <Text style={styles.label}>1. Cliente * (¿A quién vendes?)</Text>
               <View style={styles.pickerContainer}>
                 <Icon name="account" size={20} color="#6b7280" style={styles.pickerIcon} />
                 <Picker
@@ -188,7 +295,7 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
                   onValueChange={value => handleInputChange('cliente_id', value)}
                   enabled={clientes.length > 0}
                 >
-                  <Picker.Item label="Selecciona un cliente" value="" />
+                  <Picker.Item label="Selecciona un cliente" value={null} />
                   {clientes.map(cliente => (
                     <Picker.Item
                       key={cliente.id}
@@ -203,9 +310,40 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
               )}
             </View>
 
-            {/* Lote */}
+            {/* PASO 2: Seleccionar Producto */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Lote / Producto *</Text>
+              <Text style={styles.label}>2. Producto * (¿Qué tipo de producto?)</Text>
+              <View style={styles.pickerContainer}>
+                <Icon name="cube-outline" size={20} color="#6b7280" style={styles.pickerIcon} />
+                <Picker
+                  selectedValue={formData.producto_id}
+                  style={styles.picker}
+                  onValueChange={value => handleInputChange('producto_id', value)}
+                  enabled={productos.length > 0}
+                >
+                  <Picker.Item label="Selecciona un producto" value={null} />
+                  {productos.map(producto => (
+                    <Picker.Item
+                      key={producto.id}
+                      label={producto.nombre}
+                      value={producto.id}
+                    />
+                  ))}
+                </Picker>
+              </View>
+              {productos.length === 0 && (
+                <Text style={styles.warningText}>Este negocio no tiene productos registrados</Text>
+              )}
+            </View>
+
+            {/* PASO 3: Seleccionar Lote (Filtrado por producto) */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>3. Lote * (¿De qué lote vendes?)</Text>
+              {!formData.producto_id && (
+                <Text style={styles.helperText}>
+                  ⚠️ Primero selecciona un producto
+                </Text>
+              )}
               <View style={styles.pickerContainer}>
                 <Icon
                   name="package-variant"
@@ -217,21 +355,24 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
                   selectedValue={formData.lote_id}
                   style={styles.picker}
                   onValueChange={value => handleInputChange('lote_id', value)}
-                  enabled={lotes.length > 0}
+                  enabled={formData.producto_id && lotesDisponibles.length > 0}
                 >
-                  <Picker.Item label="Selecciona un lote" value="" />
-                  {lotes.map(lote => (
+                  <Picker.Item 
+                    label={formData.producto_id ? "Selecciona un lote" : "Selecciona un producto primero"} 
+                    value={null} 
+                  />
+                  {lotesDisponibles.map(lote => (
                     <Picker.Item
                       key={lote.id}
-                      label={`${lote.nombre} (Stock: ${lote.cantidad_actual})`}
+                      label={`${lote.nombre} (Stock: ${lote.cantidad_actual}) - $${parseFloat(lote.precio).toFixed(2)}`}
                       value={lote.id}
                     />
                   ))}
                 </Picker>
               </View>
-              {lotes.length === 0 && (
+              {formData.producto_id && lotesDisponibles.length === 0 && (
                 <Text style={styles.warningText}>
-                  No tienes lotes activos con stock
+                  Este producto no tiene lotes con stock disponible
                 </Text>
               )}
             </View>
@@ -333,6 +474,15 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
           </>
         )}
       </ScrollView>
+
+      <ModalAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+        onConfirm={alertModal.onConfirm}
+      />
     </DraggableModal>
   );
 };
@@ -477,5 +627,35 @@ const styles = StyleSheet.create({
   btnDisabled: {
     backgroundColor: '#9ca3af',
     opacity: 0.6,
+  },
+  helperText: {
+    color: '#f59e0b',
+    fontSize: 12,
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
+  negocioActivo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0077cc',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    gap: 12,
+  },
+  negocioActivoInfo: {
+    flex: 1,
+  },
+  negocioActivoLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  negocioActivoNombre: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e40af',
   },
 });

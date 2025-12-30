@@ -21,17 +21,30 @@ export const listarClientes = async (req, res) => {
 };
 
 export const CrearClientes = async (req, res) => {
- 
-  const { usuarioId, nombre, telefono, correo, direccion, estado } = req.body;
+  const { usuario_id, negocio_id, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
+  
+    if (!negocio_id) {
+      return res.status(400).json({
+        message: "El negocio_id es obligatorio."
+      });
+    }
+
+    if (!nombre) {
+      return res.status(400).json({
+        message: "El nombre es obligatorio."
+      });
+    }
+
     const sql = `
-      INSERT INTO clientes (usuario_id, nombre, telefono, correo, direccion, estado)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO clientes (usuario_id, negocio_id, nombre, telefono, correo, direccion, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [rows] = await pool.query(sql, [
-      usuarioId || null,
+      usuario_id || null,
+      negocio_id,
       nombre,
       telefono || null,
       correo || null,
@@ -62,30 +75,25 @@ export const CrearClientes = async (req, res) => {
 
 export const ActualizarCliente = async (req, res) => {
   const { id } = req.params;
-  let { usuario_id, nombre, telefono, correo, direccion, estado, fecha } = req.body;
+  const { usuario_id, negocio_id, nombre, telefono, correo, direccion, estado } = req.body;
 
   try {
-    // Si viene fecha, la convertimos al formato MySQL
-    if (fecha) {
-      const date = new Date(fecha);
-      fecha = date.toISOString().slice(0, 19).replace('T', ' '); 
-    }
-
     let sql = `
       UPDATE clientes
-      SET usuario_id = ?, nombre = ?, telefono = ?, correo = ?, direccion = ?, estado = ?
+      SET usuario_id = ?, negocio_id = ?, nombre = ?, telefono = ?, correo = ?, direccion = ?, estado = ?
+      WHERE id = ?
     `;
-    const params = [usuario_id, nombre, telefono, correo, direccion, estado];
 
-    if (fecha) {
-      sql += `, fecha = ?`;
-      params.push(fecha);
-    }
-
-    sql += ` WHERE id = ?`;
-    params.push(id);
-
-    const [result] = await pool.query(sql, params);
+    const [result] = await pool.query(sql, [
+      usuario_id || null,
+      negocio_id || null,
+      nombre,
+      telefono || null,
+      correo || null,
+      direccion || null,
+      estado ?? 1,
+      id
+    ]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({ success: true, message: "Cliente actualizado con éxito." });

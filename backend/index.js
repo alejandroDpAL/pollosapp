@@ -21,6 +21,7 @@ import routeLotes from './src/routes/ruta.lotes.js';
 import routePerdidas from './src/routes/ruta.perdidas.js';
 import routeReportesLote from './src/routes/ruta.reportes.lote.js';
 import routeTipoNegocio from './src/routes/ruta.tipo.negocio.js';
+import routeProcedures from './src/routes/ruta.procedures.js';
 import authRouter from './src/routes/ruta.auth.js';
 
 const server = express();
@@ -97,6 +98,7 @@ server.use('/lote', routeLotes);
 server.use('/perdida', routePerdidas);
 server.use('/reporte-lote', routeReportesLote);
 server.use('/negocio', routeTipoNegocio);
+server.use('/procedimientos', routeProcedures);
 
 // ================== MANEJO DE ERRORES ==================
 

@@ -140,7 +140,7 @@ export const update_perdida = async (req, res) => {
 };
 
 
-// GET - Pérdidas por usuario_id
+
 export const get_perdidasByUsuario = async (req, res) => {
   const { usuario_id } = req.params;
 
@@ -152,8 +152,32 @@ export const get_perdidasByUsuario = async (req, res) => {
       });
     }
 
-    // Consulta SQL
-    const sql = "SELECT * FROM perdidas WHERE usuario_id = ?";
+    
+    const sql = `
+      SELECT 
+        p.id,
+        p.lote_id,
+        p.cantidad,
+        p.motivo,
+        p.descripcion,
+        p.fecha_perdida,
+        p.fecha_creacion,
+        l.nombre AS lote_nombre,
+        l.cantidad_inicial,
+        l.cantidad_actual,
+        pr.nombre AS producto_nombre,
+        n.id AS negocio_id,
+        n.nombre AS negocio_nombre,
+        u.id AS usuario_id,
+        u.nombre AS usuario_nombre
+      FROM perdidas p
+      INNER JOIN lotes l ON p.lote_id = l.id
+      INNER JOIN productos pr ON l.producto_id = pr.id
+      INNER JOIN negocio n ON pr.negocio_id = n.id
+      INNER JOIN usuarios u ON n.usuario_id = u.id
+      WHERE u.id = ?
+      ORDER BY p.fecha_perdida DESC
+    `;
     const [rows] = await pool.query(sql, [usuario_id]);
 
     if (rows.length > 0) {

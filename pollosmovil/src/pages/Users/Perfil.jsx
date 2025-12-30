@@ -8,13 +8,13 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    Image,
-    Alert
+    Image
 } from "react-native";
 import HeaderPrincipal from '../../components/layout/header.jsx';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import ModalAlert from '../../components/common/Modal.Alet.jsx';
 import { getPerfilUsuario, updateUser } from "../../Hook/Api/userApi.js";
 import { useAuth } from "../../Hook/context/AuthContext.jsx";
 
@@ -28,7 +28,8 @@ export default function Perfil() {
     const [nombre, setNombre] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
-    const [userId, setUserId] = useState([]); 
+    const [userId, setUserId] = useState([]);
+    const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null }); 
 
     // 🔹 Obtener información del perfil
     useEffect(() => {
@@ -42,7 +43,13 @@ export default function Perfil() {
                 setCorreo(data.correo || "");
             } catch (error) {
                 console.error("Error al cargar el perfil:", error);
-                Alert.alert("Error", "No se pudo cargar la información contenida en el perfil");
+                setAlertModal({
+                    visible: true,
+                    title: 'Error',
+                    message: 'No se pudo cargar la información contenida en el perfil',
+                    type: 'error',
+                    onConfirm: null
+                });
             }
         };
         cargarPerfil();
@@ -59,42 +66,41 @@ export default function Perfil() {
             };
 
             const response = await updateUser(user.id, userData);
-            Alert.alert("Éxito", response.message || "Perfil actualizado correctamente");
+            setAlertModal({
+                visible: true,
+                title: 'Éxito',
+                message: response.message || 'Perfil actualizado correctamente',
+                type: 'success',
+                onConfirm: null
+            });
         } catch (error) {
             console.error("Error al actualizar el perfil:", error);
-            Alert.alert("Error", "No se pudo actualizar el perfil");
+            setAlertModal({
+                visible: true,
+                title: 'Error',
+                message: 'No se pudo actualizar el perfil',
+                type: 'error',
+                onConfirm: null
+            });
         }
     };
 
     // 📸 Seleccionar imagen (cámara o galería)
     const seleccionarImagen = () => {
-        Alert.alert(
-            "Seleccionar imagen",
-            "Elige una opción",
-            [
-                {
-                    text: "Cámara",
-                    onPress: () => {
-                        launchCamera({ mediaType: "photo", includeBase64: false }, (response) => {
-                            if (response.assets && response.assets.length > 0) {
-                                setImagen(response.assets[0].uri);
-                            }
-                        });
+        setAlertModal({
+            visible: true,
+            title: 'Seleccionar imagen',
+            message: 'Elige una opción: Cámara o Galería',
+            type: 'info',
+            onConfirm: () => {
+                setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
+                launchImageLibrary({ mediaType: "photo", includeBase64: false }, (response) => {
+                    if (response.assets && response.assets.length > 0) {
+                        setImagen(response.assets[0].uri);
                     }
-                },
-                {
-                    text: "Galería",
-                    onPress: () => {
-                        launchImageLibrary({ mediaType: "photo", includeBase64: false }, (response) => {
-                            if (response.assets && response.assets.length > 0) {
-                                setImagen(response.assets[0].uri);
-                            }
-                        });
-                    }
-                },
-                { text: "Cancelar", style: "cancel" }
-            ]
-        );
+                });
+            }
+        });
     };
 
     return (
@@ -143,6 +149,15 @@ export default function Perfil() {
                     <View style={{ height: 50 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <ModalAlert
+                visible={alertModal.visible}
+                title={alertModal.title}
+                message={alertModal.message}
+                type={alertModal.type}
+                onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+                onConfirm={alertModal.onConfirm}
+            />
         </View>
     );
 }

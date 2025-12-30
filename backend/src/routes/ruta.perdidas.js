@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { verifyToken } from "../middleware/auth.middleware.js";
-import { get_perdidas, create_perdida, update_perdida, get_perdidasByUsuario } from "../controllers/controler.perdidas.js";
+import { get_perdidas, create_perdida, update_perdida } from "../controllers/controler.perdidas.js";
+import { registrarPerdida, getPerdidasByUsuario } from "../controllers/controler.procedures.js";
 import { validateCreatePerdida, validateUpdatePerdida, validateUsuarioId } from "../middleware/validators.js";
 
 const router = Router();
@@ -8,7 +9,8 @@ const router = Router();
 // Todas las rutas requieren autenticación
 router.get("/listar", verifyToken, get_perdidas);
 router.post("/crear-perdidas", verifyToken, validateCreatePerdida, create_perdida);
+router.post("/registrar", verifyToken, registrarPerdida);
 router.put("/perdidas/:id", verifyToken, validateUpdatePerdida, update_perdida);
-router.get("/usuario/:usuario_id", verifyToken, validateUsuarioId, get_perdidasByUsuario);
+router.get("/usuario/:usuario_id", verifyToken, validateUsuarioId, getPerdidasByUsuario);
 
 export default router;

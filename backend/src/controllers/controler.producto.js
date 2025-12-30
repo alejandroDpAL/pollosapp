@@ -25,11 +25,11 @@ export const listarProductos = async (req, res) => {
 
 
 export const CrearProductos = async (req, res) => {
-  const { nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta } = req.body;
+  const { nombre, negocio_id } = req.body;
 
   try {
     // Validar campos obligatorios
-    const camposObligatorios = { nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta };
+    const camposObligatorios = { nombre, negocio_id };
     const faltantes = Object.entries(camposObligatorios)
       .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
       .map(([campo]) => campo);
@@ -41,17 +41,13 @@ export const CrearProductos = async (req, res) => {
     }
 
     const sql = `
-      INSERT INTO productos (nombre, negocio_id, cantidad, costo, fecha_compra, fecha_venta) 
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO productos (nombre, negocio_id) 
+      VALUES (?, ?)
     `;
 
     const [rows] = await pool.query(sql, [
       nombre,
-      negocio_id,
-      cantidad,
-      costo,
-      fecha_compra,
-      fecha_venta
+      negocio_id
     ]);
 
     if (rows.affectedRows > 0) {
@@ -76,22 +72,24 @@ export const CrearProductos = async (req, res) => {
 
 
 export const ActualizarProducto = async (req, res) => {
-  const { id } = req.params; // aquí usamos "id", que es la columna real en la tabla
-  const { nombre, cantidad, costo, fecha_compra, fecha_venta } = req.body;
+  const { id } = req.params;
+  const { nombre } = req.body;
 
   try {
+    if (!nombre) {
+      return res.status(400).json({
+        message: "El nombre es obligatorio."
+      });
+    }
+
     const sql = `
       UPDATE productos
-      SET nombre = ?, cantidad = ?, costo = ?, fecha_compra = ?, fecha_venta = ?
+      SET nombre = ?
       WHERE id = ?
     `;
 
     const [result] = await pool.query(sql, [
       nombre,
-      cantidad,
-      costo,
-      fecha_compra,
-      fecha_venta,
       id,
     ]);
 
@@ -110,11 +108,11 @@ export const ActualizarProducto = async (req, res) => {
 
 export const EliminarProductos = async (req, res) => {
   try {
-    const { id_producto } = req.params;
+    const { id } = req.params;
 
-    let sql = "DELETE FROM productos WHERE id_producto = ?";
+    let sql = "DELETE FROM productos WHERE id = ?";
 
-    const [result] = await pool.query(sql, [id_producto]);
+    const [result] = await pool.query(sql, [id]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({
@@ -149,7 +147,7 @@ export const listarProductosPorUsuario = async (req, res) => {
     const sql = `
       SELECT p.*
       FROM productos p
-      INNER JOIN negocios n ON p.negocio_id = n.id
+      INNER JOIN negocio n ON p.negocio_id = n.id
       WHERE n.usuario_id = ?
     `;
 
@@ -165,6 +163,41 @@ export const listarProductosPorUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener productos por usuario:", error);
+    res.status(500).json({
+      message: "Error en el servidor.",
+      error: error.message
+    });
+  }
+};
+
+export const listarProductosPorNegocio = async (req, res) => {
+  const { negocio_id } = req.params;
+
+  try {
+    if (!negocio_id) {
+      return res.status(400).json({
+        message: "El ID del negocio es obligatorio."
+      });
+    }
+
+    const sql = `
+      SELECT * FROM productos
+      WHERE negocio_id = ?
+      ORDER BY nombre ASC
+    `;
+
+    const [rows] = await pool.query(sql, [negocio_id]);
+
+    if (rows.length > 0) {
+      res.status(200).json(rows);
+    } else {
+      res.status(404).json({
+        message: "No se encontraron productos para este negocio."
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al obtener productos por negocio:", error);
     res.status(500).json({
       message: "Error en el servidor.",
       error: error.message

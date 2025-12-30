@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS negocio (
     correo VARCHAR(50) NOT NULL,
     fecha DATE NULL,
     telefono INT NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT nombre UNIQUE (nombre),
     CONSTRAINT fk_negocio_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -42,10 +44,8 @@ CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     negocio_id INT NOT NULL,
-    cantidad INT NOT NULL,
-    costo INT NOT NULL,
-    fecha_compra DATE NULL,
-    fecha_venta DATE NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX tipo_negocio_id (negocio_id),
     CONSTRAINT productos_ibfk_1 
         FOREIGN KEY (negocio_id) REFERENCES negocio(id)
@@ -61,8 +61,11 @@ CREATE TABLE IF NOT EXISTS lotes (
     cantidad_actual INT NOT NULL,
     precio DECIMAL(10, 2) NOT NULL,
     fecha DATE NOT NULL,
+    estado ENUM('abierto', 'cerrado') DEFAULT 'abierto',
     descripcion TEXT NULL,
     nombre VARCHAR(50) NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX producto_id (producto_id),
     CONSTRAINT lotes_ibfk_1 
         FOREIGN KEY (producto_id) REFERENCES productos(id)
@@ -73,13 +76,17 @@ CREATE TABLE IF NOT EXISTS lotes (
 -- ============================================
 CREATE TABLE IF NOT EXISTS clientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    negocio_id INT NOT NULL,
     usuario_id INT NULL,
     nombre VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NULL,
     correo VARCHAR(100) NULL,
     direccion TEXT NULL,
     estado TINYINT(1) DEFAULT 1 NULL,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_clientes_negocio
+        FOREIGN KEY (negocio_id) REFERENCES negocio(id) ON DELETE CASCADE,
     CONSTRAINT fk_clientes_usuarios 
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -107,14 +114,18 @@ CREATE TABLE IF NOT EXISTS costos (
 CREATE TABLE IF NOT EXISTS perdidas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lote_id INT NOT NULL,
+    usuario_id INT NOT NULL,
     cantidad INT NOT NULL,
     motivo ENUM('mortalidad', 'enfermedad', 'accidente', 'otro') NOT NULL,
     descripcion TEXT NULL,
     fecha_perdida DATE NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX lote_id (lote_id),
     CONSTRAINT perdidas_ibfk_1 
-        FOREIGN KEY (lote_id) REFERENCES lotes(id)
+        FOREIGN KEY (lote_id) REFERENCES lotes(id),
+    CONSTRAINT perdidas_ibfk_2
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ============================================
@@ -168,21 +179,19 @@ CREATE TABLE IF NOT EXISTS ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lote_id INT NOT NULL,
     cliente_id INT NULL,
-    usuario_id INT NULL,
+    usuario_id INT NOT NULL,
     cantidad INT NOT NULL,
     precio_unitario DECIMAL(10, 2) NOT NULL,
     valor_total DECIMAL(10, 2) NOT NULL,
     fecha DATETIME NOT NULL,
     observaciones TEXT NULL,
+    estado ENUM('pendiente', 'completada', 'pagado', 'parcial', 'anulado') DEFAULT 'pendiente' NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    producto_id INT NULL,
-    estado ENUM('pendiente', 'realizada', 'pagado', 'parcial', 'anulado') DEFAULT 'pendiente' NULL,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX lote_id (lote_id),
     INDEX cliente_id (cliente_id),
+    INDEX usuario_id (usuario_id),
     INDEX idx_ventas_fecha (fecha),
-    INDEX idx_ventas_producto_id (producto_id),
-    CONSTRAINT fk_ventas_productos 
-        FOREIGN KEY (producto_id) REFERENCES productos(id),
     CONSTRAINT fk_ventas_usuarios 
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     CONSTRAINT ventas_ibfk_1 
