@@ -308,11 +308,9 @@ const Business = ({ navigation }) => {
       ) : (
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           {filteredVentas.map((venta) => (
-            <TouchableOpacity
+            <View
               key={venta.id}
               style={styles.card}
-              onPress={() => handleVerDetalle(venta)}
-              activeOpacity={0.7}
             >
               {/* Badge de estado */}
               <View style={[styles.estadoBadge, { backgroundColor: getEstadoBackground(venta.estado) }]}>
@@ -358,11 +356,11 @@ const Business = ({ navigation }) => {
               </View>
 
               {/* Flecha indicadora */}
-              <View style={styles.footerCard}>
+              <TouchableOpacity style={styles.footerCard} onPress={() => handleVerDetalle(venta)}>
                 <Text style={styles.verMasText}>Ver detalles</Text>
                 <Icon name="chevron-right" size={20} color="#0077cc" />
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           ))}
         </ScrollView>
       )}
