@@ -23,6 +23,7 @@ import routeReportesLote from './src/routes/ruta.reportes.lote.js';
 import routeTipoNegocio from './src/routes/ruta.tipo.negocio.js';
 import routeProcedures from './src/routes/ruta.procedures.js';
 import authRouter from './src/routes/ruta.auth.js';
+import dashboardRouter from './src/routes/ruta.dashboard.js';
 
 const server = express();
 
@@ -99,6 +100,7 @@ server.use('/perdida', routePerdidas);
 server.use('/reporte-lote', routeReportesLote);
 server.use('/negocio', routeTipoNegocio);
 server.use('/procedimientos', routeProcedures);
+server.use('/dashboard', dashboardRouter);
 
 // ================== MANEJO DE ERRORES ==================
 

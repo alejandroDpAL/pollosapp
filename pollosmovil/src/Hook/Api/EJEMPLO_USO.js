@@ -26,7 +26,6 @@ useEffect(() => {
 const crearCliente = async (datos) => {
   try {
     const response = await api.post('/cliente', datos);
-    console.log('Cliente creado:', response.data);
   } catch (error) {
     console.error('Error:', error);
   }
@@ -80,7 +79,6 @@ const handleLogout = async () => {
     // Opcional: llamar al backend para invalidar el refresh token
     await api.post('/auth/logout');
   } catch (error) {
-    console.log('Error en logout:', error);
   } finally {
     // Limpia tokens locales y cambia a AuthNavigator
     await logout();

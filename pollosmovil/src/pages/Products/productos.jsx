@@ -38,7 +38,6 @@ const Productos = () => {
       try {
         const data = await getProducts();
         setProductos(data);
-        console.log(data);
       } catch (err) {
         console.error("Error fetching products:", err);
       }

@@ -7,8 +7,6 @@ export const getClients = async () => {
     return response.data;
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
-    console.log(error);
-
     throw error;
   }
 };
@@ -20,7 +18,6 @@ export const getClientById = async (clientId) => {
     return response.data;
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
-    console.log(error);
 
     throw error;
   }

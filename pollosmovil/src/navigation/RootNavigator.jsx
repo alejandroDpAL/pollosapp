@@ -6,9 +6,15 @@ import { useNegocio } from '../Hook/context/NegocioContext.jsx';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
 import SelectNegocio from '../pages/Business/SelectNegocio.jsx';
+import ModalAlert from '../components/common/Modal.Alet.jsx';
 
 export default function RootNavigator() {
-  const { isLoggedIn, loading: authLoading } = useAuth();
+  const {
+    isLoggedIn,
+    loading: authLoading,
+    sessionClosedMessage,
+    clearSessionMessage
+  } = useAuth();
   const { negocioActivo, loading: negocioLoading } = useNegocio();
 
   // Mostrar loader mientras se restaura la sesión
@@ -22,14 +28,50 @@ export default function RootNavigator() {
 
   // Si no está logueado, mostrar pantalla de login
   if (!isLoggedIn) {
-    return <AuthNavigator />;
+    return (
+      <>
+        <AuthNavigator />
+        <ModalAlert
+          visible={!!sessionClosedMessage}
+          title="Sesión cerrada"
+          message={sessionClosedMessage || ''}
+          type="warning"
+          // onClose={clearSessionMessage}
+          onConfirm={clearSessionMessage}
+        />
+      </>
+    );
   }
 
   // Si está logueado pero no ha seleccionado negocio, mostrar selector
   if (!negocioActivo) {
-    return <SelectNegocio />;
+    return (
+      <>
+        <SelectNegocio />
+        <ModalAlert
+          visible={!!sessionClosedMessage}
+          title="Sesión cerrada"
+          message={sessionClosedMessage || ''}
+          type="warning"
+          onClose={clearSessionMessage}
+          onConfirm={clearSessionMessage}
+        />
+      </>
+    );
   }
 
   // Si está logueado y tiene negocio seleccionado, mostrar app principal
-  return <AppNavigator />;
+  return (
+    <>
+      <AppNavigator />
+      <ModalAlert
+        visible={!!sessionClosedMessage}
+        title="Sesión cerrada"
+        message={sessionClosedMessage || ''}
+        type="warning"
+        onClose={clearSessionMessage}
+        onConfirm={clearSessionMessage}
+      />
+    </>
+  );
 }

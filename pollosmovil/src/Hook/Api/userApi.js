@@ -7,7 +7,6 @@ export const getUsers = async () => {
         return response.data;
     } catch (error) {
         console.error("Error al obtener usuarios:", error);
-        console.log(error);
 
         throw error;
     }
@@ -19,7 +18,6 @@ export const getPerfilUsuario = async (id,userData) => {
         return response.data;
     } catch (error) {
         console.error("Error al obtener usuarios:", error);
-        console.log(error);
 
         throw error;
     }

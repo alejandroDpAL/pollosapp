@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveTokens, getAccessToken, getRefreshToken, clearTokens } from '../../services/storageService.jsx';
+import { refreshAccessToken } from './tokenRefresh.js';
 
 const BASE_URL = 'http://192.168.100.11:3000';
 
@@ -16,7 +16,7 @@ const api = axios.create({
 
 // Interceptor de Request - Agregar token de acceso
 api.interceptors.request.use(async (config) => {
-    const token = await getAccessToken();
+    const token = await AsyncStorage.getItem('accessToken');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,26 +41,22 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        
+        // No es un error 401, rechazar
         if (!error.response || error.response.status !== 401) {
             return Promise.reject(error);
         }
 
-       
+        // Ya intentamos refrescar, no intentar de nuevo
         if (originalRequest._retry) {
+            await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
             return Promise.reject(error);
         }
+
+        // Marcar que ya intentamos
         originalRequest._retry = true;
 
-        // Intentar refrescar el token de forma coordinada
-        const refreshToken = await getRefreshToken();
-        if (!refreshToken) {
-            await clearTokens();
-            return Promise.reject(error);
-        }
-
+        // Si ya está refrescando, esperar a que termine
         if (isRefreshing) {
-            // Esperar a que termine el refresh en curso
             return new Promise((resolve) => {
                 subscribeTokenRefresh((newToken) => {
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -69,26 +65,28 @@ api.interceptors.response.use(
             });
         }
 
+        // Iniciar el refresh
         isRefreshing = true;
         try {
-            const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-            const newAccess = res?.data?.accessToken;
+            const newToken = await refreshAccessToken();
 
-            if (!newAccess) {
-                throw new Error('No se recibió nuevo access token');
+            if (newToken) {
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                onRefreshed(newToken);
+                isRefreshing = false;
+                return api(originalRequest);
+            } else {
+                onRefreshed(null);
+                isRefreshing = false;
+                await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+                return Promise.reject(error);
             }
-
-            await saveTokens(newAccess, refreshToken);
-            onRefreshed(newAccess);
+        } catch (refreshError) {
+            console.error('[ApiConnection] Error refrescando token:', refreshError.message);
+            onRefreshed(null);
             isRefreshing = false;
-
-            // Reintentar la petición original con el nuevo token
-            originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-            return api(originalRequest);
-        } catch (refreshErr) {
-            isRefreshing = false;
-            await clearTokens();
-            return Promise.reject(refreshErr);
+            await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+            return Promise.reject(refreshError);
         }
     }
 );

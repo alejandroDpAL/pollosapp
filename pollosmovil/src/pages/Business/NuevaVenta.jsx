@@ -59,9 +59,6 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
         getLotesByUsuario(user.id),
       ]);
       
-      console.log('Productos cargados:', productosData);
-      console.log('Clientes cargados:', clientesData);
-      console.log('Lotes cargados:', lotesData);
       
       setProductos(productosData || []);
       setClientes(clientesData || []);
@@ -89,7 +86,6 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
         return lote.producto_id === formData.producto_id && lote.cantidad_actual > 0;
       });
       
-      console.log('Lotes filtrados por producto:', lotesFiltrados);
       setLotesDisponibles(lotesFiltrados);
       
       // Resetear lote seleccionado si ya no está disponible
@@ -341,7 +337,7 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
               <Text style={styles.label}>3. Lote * (¿De qué lote vendes?)</Text>
               {!formData.producto_id && (
                 <Text style={styles.helperText}>
-                  ⚠️ Primero selecciona un producto
+                   Primero selecciona un producto
                 </Text>
               )}
               <View style={styles.pickerContainer}>

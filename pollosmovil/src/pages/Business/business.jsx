@@ -57,8 +57,6 @@ const Business = ({ navigation }) => {
      
       const data = await getVentasPorNegocio(negocioActivo.id);
       
-      console.log(`Ventas del negocio ${negocioActivo.nombre}:`, data.length);
-
       const ventasTransformadas = data.map(venta => ({
         id: venta.id,
         cliente: venta.nombre_cliente,

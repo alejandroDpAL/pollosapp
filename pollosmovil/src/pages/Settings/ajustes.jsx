@@ -47,7 +47,7 @@ const Ajustes = () => {
         })
       );
     } catch (error) {
-      console.log("Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesión:", error);
     }
   };
 
