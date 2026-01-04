@@ -13,10 +13,12 @@ import HeaderPrincipal from "../../components/layout/header";
 import Modal from "../../components/common/Modal.componet";
 import DraggableModal from "../../components/common/DraggableModal";
 import ModalAlert from "../../components/common/Modal.Alet.jsx";
-import { getProducts } from "../../Hook/Api/productApi";
+import { getProductosByNegocio, createProduct, updateProduct, deleteProduct } from "../../Hook/Api/productApi";
+import { useNegocio } from "../../Hook/context/NegocioContext";
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
+  const { negocioActivo } = useNegocio();
   const [modalFormVisible, setModalFormVisible] = useState(false);
   const [modalDeleteVisible, setModalDeleteVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -25,39 +27,36 @@ const Productos = () => {
 
   const [formData, setFormData] = useState({
     nombre: "",
+    precio: "",
     cantidad: "",
-    costo: "",
-    fecha_compra: "",
-    fecha_venta: "",
-    imagen: "https://cdn-icons-png.flaticon.com/512/3081/3081826.png", // Imagen por defecto
   });
 
-  // GET /producto/listar
   useEffect(() => {
     const fetchProduc = async () => {
+      if (!negocioActivo?.id) return;
       try {
-        const data = await getProducts();
-        setProductos(data);
+        const data = await getProductosByNegocio(negocioActivo.id);
+        setProductos(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching products:", err);
+        setAlertModal({
+          visible: true,
+          title: "Error",
+          message: "No se pudieron cargar los productos del negocio.",
+          type: "error",
+          onConfirm: null,
+        });
       }
     };
     fetchProduc();
-  }, []);
+  }, [negocioActivo]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const resetForm = () => {
-    setFormData({
-      nombre: "",
-      cantidad: "",
-      costo: "",
-      fecha_compra: "",
-      fecha_venta: "",
-      imagen: "https://cdn-icons-png.flaticon.com/512/3081/3081826.png",
-    });
+    setFormData({ nombre: "", precio: "", cantidad: "" });
     setIsEditing(false);
     setSelectedProducto(null);
   };
@@ -69,52 +68,90 @@ const Productos = () => {
   };
 
   const handleSaveProducto = () => {
-    if (!formData.nombre || !formData.costo) {
+    if (!formData.nombre?.trim()) {
       setAlertModal({
         visible: true,
         title: 'Campos incompletos',
-        message: 'Por favor completa el nombre y costo.',
+        message: 'El nombre es obligatorio.',
         type: 'error',
         onConfirm: null
       });
       return;
     }
 
-    if (isEditing && selectedProducto) {
-      // Editar producto existente
-      setProductos((prev) =>
-        prev.map((p) =>
-          p.id === selectedProducto.id ? { ...p, ...formData } : p
-        )
-      );
+    if (!negocioActivo?.id) {
       setAlertModal({
         visible: true,
-        title: 'Éxito',
-        message: 'Producto actualizado correctamente',
-        type: 'success',
+        title: 'Negocio requerido',
+        message: 'Selecciona un negocio antes de agregar productos.',
+        type: 'error',
         onConfirm: null
       });
-    } else {
-      // Agregar nuevo producto
-      setProductos((prev) => [
-        ...prev,
-        { id: Date.now(), negocio_id: 1, ...formData },
-      ]);
-      setAlertModal({
-        visible: true,
-        title: 'Éxito',
-        message: 'Producto agregado correctamente',
-        type: 'success',
-        onConfirm: null
-      });
+      return;
     }
 
-    setModalFormVisible(false);
-    resetForm();
+    const nombre = formData.nombre.trim();
+    const precio = formData.precio !== "" && !isNaN(Number(formData.precio)) ? Number(formData.precio) : 0;
+    const cantidad = formData.cantidad !== "" && !isNaN(Number(formData.cantidad)) ? Number(formData.cantidad) : 0;
+
+    if (isEditing && selectedProducto) {
+      updateProduct(selectedProducto.id, { nombre, negocio_id: negocioActivo.id, precio, cantidad })
+        .then(() => {
+          setProductos((prev) => prev.map((p) => p.id === selectedProducto.id ? { ...p, nombre, negocio_id: negocioActivo.id, precio, cantidad } : p));
+          setAlertModal({
+            visible: true,
+            title: 'Éxito',
+            message: 'Producto actualizado correctamente',
+            type: 'success',
+            onConfirm: null
+          });
+          setModalFormVisible(false);
+          resetForm();
+        })
+        .catch((err) => {
+          console.error('Error al actualizar producto:', err);
+          setAlertModal({
+            visible: true,
+            title: 'Error',
+            message: 'No se pudo actualizar el producto.',
+            type: 'error',
+            onConfirm: null
+          });
+        });
+    } else {
+      createProduct({ nombre, negocio_id: negocioActivo.id, precio, cantidad })
+        .then((response) => {
+          const nuevo = { id: response?.id || Date.now(), nombre, negocio_id: negocioActivo.id, precio, cantidad };
+          setProductos((prev) => [nuevo, ...prev]);
+          setAlertModal({
+            visible: true,
+            title: 'Éxito',
+            message: 'Producto agregado correctamente',
+            type: 'success',
+            onConfirm: null
+          });
+          setModalFormVisible(false);
+          resetForm();
+        })
+        .catch((err) => {
+          console.error('Error al crear producto:', err);
+          setAlertModal({
+            visible: true,
+            title: 'Error',
+            message: 'No se pudo crear el producto.',
+            type: 'error',
+            onConfirm: null
+          });
+        });
+    }
   };
 
   const handleEditProducto = (producto) => {
-    setFormData(producto);
+    setFormData({
+      nombre: producto.nombre,
+      precio: producto.precio ? String(producto.precio) : "",
+      cantidad: producto.cantidad ? String(producto.cantidad) : "",
+    });
     setSelectedProducto(producto);
     setIsEditing(true);
     setModalFormVisible(true);
@@ -127,16 +164,29 @@ const Productos = () => {
 
   const handleConfirmDelete = () => {
     if (selectedProducto) {
-      setProductos((prev) => prev.filter((p) => p.id !== selectedProducto.id));
-      setModalDeleteVisible(false);
-      setAlertModal({
-        visible: true,
-        title: 'Éxito',
-        message: 'Producto eliminado correctamente',
-        type: 'success',
-        onConfirm: null
-      });
-      setSelectedProducto(null);
+      deleteProduct(selectedProducto.id)
+        .then(() => {
+          setProductos((prev) => prev.filter((p) => p.id !== selectedProducto.id));
+          setModalDeleteVisible(false);
+          setAlertModal({
+            visible: true,
+            title: 'Éxito',
+            message: 'Producto eliminado correctamente',
+            type: 'success',
+            onConfirm: null
+          });
+          setSelectedProducto(null);
+        })
+        .catch((err) => {
+          console.error('Error al eliminar producto:', err);
+          setAlertModal({
+            visible: true,
+            title: 'Error',
+            message: 'No se pudo eliminar el producto.',
+            type: 'error',
+            onConfirm: null
+          });
+        });
     }
   };
 
@@ -151,17 +201,20 @@ const Productos = () => {
         {productos.map((item) => (
           <View key={item.id} style={styles.card}>
             <Image
-              source={{
-                uri: item.imagen || "https://cdn-icons-png.flaticon.com/512/3081/3081826.png",
-              }}
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/3081/3081826.png" }}
               style={styles.avatar}
             />
             <View style={styles.info}>
               <Text style={styles.name}>{item.nombre}</Text>
-              <Text style={styles.field}>Cantidad: {item.cantidad}</Text>
-              <Text style={styles.field}>Costo: ${item.costo}</Text>
-              <Text style={styles.field}>F. Compra: {item.fecha_compra}</Text>
-              <Text style={styles.field}>F. Venta: {item.fecha_venta}</Text>
+              {item.negocio_id && (
+                <Text style={styles.field}>Negocio: {item.negocio_id}</Text>
+              )}
+              {item.precio !== undefined && item.precio !== null && (
+                <Text style={styles.field}>Precio: ${Number(item.precio || 0).toFixed(2)}</Text>
+              )}
+              {item.cantidad !== undefined && item.cantidad !== null && (
+                <Text style={styles.field}>Cantidad: {item.cantidad}</Text>
+              )}
             </View>
             <View style={styles.actions}>
               <TouchableOpacity onPress={() => handleEditProducto(item)}>
@@ -187,23 +240,11 @@ const Productos = () => {
           resetForm();
         }}
         title={isEditing ? "Editar Producto" : "Nuevo Producto"}
-        initialHeight={0.75}
-        maxHeight={0.95}
+        initialHeight={0.45}
+        maxHeight={0.7}
       >
         <View style={styles.formContainer}>
-          {/* Preview de imagen */}
-          <View style={styles.imagePreviewContainer}>
-            <Image
-              source={{ uri: formData.imagen }}
-              style={styles.imagePreview}
-            />
-            <TouchableOpacity style={styles.changeImageButton}>
-              <Icon name="camera" size={20} color="#0077cc" />
-              <Text style={styles.changeImageText}>Cambiar imagen</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Formulario */}
+          {/* Formulario: nombre, precio, cantidad */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nombre del producto *</Text>
@@ -218,72 +259,41 @@ const Productos = () => {
               </View>
             </View>
 
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, styles.halfWidth]}>
-                <Text style={styles.label}>Cantidad</Text>
-                <View style={styles.inputContainer}>
-                  <Icon name="numeric" size={20} color="#6b7280" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0"
-                    value={formData.cantidad}
-                    onChangeText={(text) => handleInputChange("cantidad", text)}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-
-              <View style={[styles.inputGroup, styles.halfWidth]}>
-                <Text style={styles.label}>Costo *</Text>
-                <View style={styles.inputContainer}>
-                  <Icon name="currency-usd" size={20} color="#6b7280" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0.00"
-                    value={formData.costo}
-                    onChangeText={(text) => handleInputChange("costo", text)}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-            </View>
-
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Fecha de compra</Text>
+              <Text style={styles.label}>Precio</Text>
               <View style={styles.inputContainer}>
-                <Icon name="calendar" size={20} color="#6b7280" />
+                <Icon name="currency-usd" size={20} color="#6b7280" />
                 <TextInput
                   style={styles.input}
-                  placeholder="DD/MM/AAAA"
-                  value={formData.fecha_compra}
-                  onChangeText={(text) => handleInputChange("fecha_compra", text)}
+                  placeholder="0.00"
+                  keyboardType="decimal-pad"
+                  value={formData.precio}
+                  onChangeText={(text) => handleInputChange("precio", text)}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Fecha de venta</Text>
+              <Text style={styles.label}>Cantidad</Text>
               <View style={styles.inputContainer}>
-                <Icon name="calendar-check" size={20} color="#6b7280" />
+                <Icon name="numeric" size={20} color="#6b7280" />
                 <TextInput
                   style={styles.input}
-                  placeholder="DD/MM/AAAA"
-                  value={formData.fecha_venta}
-                  onChangeText={(text) => handleInputChange("fecha_venta", text)}
+                  placeholder="0"
+                  keyboardType="number-pad"
+                  value={formData.cantidad}
+                  onChangeText={(text) => handleInputChange("cantidad", text)}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>URL de imagen</Text>
+              <Text style={styles.label}>Negocio</Text>
               <View style={styles.inputContainer}>
-                <Icon name="image" size={20} color="#6b7280" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="https://..."
-                  value={formData.imagen}
-                  onChangeText={(text) => handleInputChange("imagen", text)}
-                />
+                <Icon name="office-building" size={20} color="#6b7280" />
+                <Text style={styles.input}>
+                  {negocioActivo?.nombre || "Selecciona un negocio"}
+                </Text>
               </View>
             </View>
           </View>

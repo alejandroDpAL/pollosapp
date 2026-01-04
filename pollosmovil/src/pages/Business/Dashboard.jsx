@@ -1,58 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import HeaderPrincipal from '../../components/layout/header.jsx';
-import Menu from '../../components/common/bottom.navigation.jsx';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import GraphTest from "../../components/common/Graficas.componet.jsx";
-import { getEstadisticasNegocio, getVentasPorDia, getUltimasVentas } from '../../Hook/Api/DashboardApi.js';
+import StatCard from "../../components/common/StatCard.jsx";
+import { useDashboard } from '../../Hook/hooks/useDashboard.js';
 import { useNegocio } from '../../Hook/context/NegocioContext.jsx';
 import { useAuth } from '../../Hook/context/AuthContext.jsx';
 
 const { width } = Dimensions.get("window");
+const isSmallDevice = width < 375;
+const isMediumDevice = width >= 375 && width < 768;
+const isLargeDevice = width >= 768;
 
 const Dashboard = ({ navigation }) => {
     const { negocioActivo } = useNegocio();
     const { forceLogoutWithMessage } = useAuth();
-    const [stats, setStats] = useState(null);
-    const [chartData, setChartData] = useState(null);
-    const [ultimasVentas, setUltimasVentas] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { stats, chartData, ultimasVentas, loading, error, cargarDatos, procesarDatosEstados, procesarDatosProductos } = useDashboard(negocioActivo?.id, forceLogoutWithMessage);
 
-    useEffect(() => {
-        if (negocioActivo?.id) {
-            cargarDatos();
-        }
-    }, [negocioActivo]);
-
-    const cargarDatos = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            // Cargar stats primero (obligatorio)
-            const statsData = await getEstadisticasNegocio(negocioActivo.id);
-            setStats(statsData?.data || statsData);
-            
-            // Cargar gráfico sin bloquear (no es obligatorio)
-            const chartDataResult = await getVentasPorDia(negocioActivo.id, 7);
-            setChartData(chartDataResult || []);
-            
-            // Cargar últimas ventas
-            const ventasData = await getUltimasVentas(negocioActivo.id, 5);
-            setUltimasVentas(ventasData || []);
-            
-        } catch (error) {
-            console.error('Error al cargar datos:', error);
-            if (error?.response?.status === 401) {
-                await forceLogoutWithMessage('Tu sesión ha sido cerrada. Vuelve a iniciar sesión.');
-            } else {
-                setError('No se pudieron cargar los datos del dashboard');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [viewEstadisticas, setViewEstadisticas] = useState(false);
+    const [limiteVentas, setLimiteVentas] = useState(5);
 
     const formatearMoneda = (valor) => {
         return parseFloat(valor).toLocaleString('es-CO', {
@@ -61,24 +28,6 @@ const Dashboard = ({ navigation }) => {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
         });
-    };
-
-    const StatCard = ({ icon, iconColor, bgColor, title, value, subtitle, size = 'normal' }) => {
-        const isLarge = size === 'large';
-        return (
-            <View style={[styles.statCard, isLarge && styles.statCardLarge, { width: isLarge ? '100%' : '48%' }]}>
-                <View style={[styles.statIconContainer, { backgroundColor: bgColor }]}>
-                    <Icon name={icon} size={isLarge ? 36 : 28} color={iconColor} />
-                </View>
-                <View style={styles.statContent}>
-                    <Text style={styles.statLabel}>{title}</Text>
-                    <Text style={[styles.statValue, isLarge && styles.statValueLarge]}>
-                        {value}
-                    </Text>
-                    {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
-                </View>
-            </View>
-        );
     };
 
     if (loading) {
@@ -109,23 +58,21 @@ const Dashboard = ({ navigation }) => {
         );
     }
 
-    // Adaptar estructura del backend a la esperada por el componente
     const kpis = stats?.kpis || {};
     const inventario = stats?.inventario || {};
     const perdidas = stats?.perdidas || {};
-    
-    // Crear objeto resumen compatible
+
     const resumen = {
         ingresoTotal: kpis.ingresoTotal || 0,
         totalVentas: kpis.totalVentas || 0,
         costoTotal: kpis.costoTotal || 0,
         gananciaNeta: kpis.gananciaNeta || 0,
         totalClientes: kpis.totalClientes || 0,
-        totalProductos: 0, // No disponible en el backend actual
+        totalProductos: 0,
         ventasPendientes: kpis.ventasPendientes || 0,
         ventasCompletadas: kpis.ventasCompletadas || 0
     };
-    
+
     const lotes = {
         totalLotesActivos: inventario.totalLotes || 0,
         cantidadTotalProducto: inventario.stockTotal || 0
@@ -137,102 +84,119 @@ const Dashboard = ({ navigation }) => {
 
             <ScrollView
                 style={styles.scrollContent}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={styles.scrollContentContainer}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Resumen Principal */}
-                <View style={styles.summarySection}>
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Resumen General</Text>
-                    
-                    {/* Fila 1: Ingresos y Costos */}
+
                     <View style={styles.cardRow}>
                         <StatCard
                             icon="cash-multiple"
                             iconColor="#10b981"
                             bgColor="#d1fae5"
                             title="Ingresos"
-                            value={formatearMoneda(resumen.ingresoTotal || 0)}
-                            subtitle={`${resumen.totalVentas || 0} ventas`}
-                            size="normal"
+                            value={formatearMoneda(resumen.ingresoTotal)}
+                            subtitle={`${resumen.totalVentas} ventas`}
                         />
                         <StatCard
                             icon="wallet"
                             iconColor="#ef4444"
                             bgColor="#fee2e2"
                             title="Costos"
-                            value={formatearMoneda(resumen.costoTotal || 0)}
-                            subtitle={`Total de egresos`}
-                            size="normal"
+                            value={formatearMoneda(resumen.costoTotal)}
+                            subtitle="Total de egresos"
                         />
                     </View>
 
-                    {/* Fila 2: Ganancia Neta (Grande) */}
                     <StatCard
                         icon="trending-up"
                         iconColor={parseFloat(resumen.gananciaNeta) >= 0 ? "#0077cc" : "#ef4444"}
                         bgColor={parseFloat(resumen.gananciaNeta) >= 0 ? "#eff6ff" : "#fef2f2"}
                         title="Ganancia Neta"
-                        value={formatearMoneda(resumen.gananciaNeta || 0)}
-                        subtitle={`Ingresos - Costos`}
+                        value={formatearMoneda(resumen.gananciaNeta)}
+                        subtitle="Ingresos - Costos"
                         size="large"
                     />
                 </View>
 
                 {/* Gestión de Negocio */}
-                <View style={styles.summarySection}>
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Gestión del Negocio</Text>
-                    
+
                     <View style={styles.cardRow}>
                         <StatCard
                             icon="account-group"
                             iconColor="#1a73e8"
                             bgColor="#d0e8ff"
                             title="Clientes"
-                            value={resumen.totalClientes || 0}
+                            value={resumen.totalClientes}
                             subtitle="Activos"
-                            size="normal"
                         />
                         <StatCard
                             icon="package-variant-closed"
                             iconColor="#6a1b9a"
                             bgColor="#e6ddff"
                             title="Productos"
-                            value={resumen.totalProductos || 0}
+                            value={resumen.totalProductos}
                             subtitle="En catálogo"
-                            size="normal"
                         />
+                        {isLargeDevice && (
+                            <StatCard
+                                icon="inbox-multiple"
+                                iconColor="#fbbc04"
+                                bgColor="#fff3d6"
+                                title="Lotes Activos"
+                                value={lotes.totalLotesActivos}
+                                subtitle={`${lotes.cantidadTotalProducto} unidades`}
+                            />
+                        )}
                     </View>
 
-                    <View style={styles.cardRow}>
-                        <StatCard
-                            icon="inbox-multiple"
-                            iconColor="#fbbc04"
-                            bgColor="#fff3d6"
-                            title="Lotes Activos"
-                            value={lotes.totalLotesActivos || 0}
-                            subtitle={`${lotes.cantidadTotalProducto || 0} unidades`}
-                            size="normal"
-                        />
-                        <StatCard
-                            icon="alert-circle"
-                            iconColor="#f97316"
-                            bgColor="#fed7aa"
-                            title="Pérdidas"
-                            value={perdidas.cantidadPerdida || 0}
-                            subtitle={`${perdidas.totalEventos || 0} eventos`}
-                            size="normal"
-                        />
-                    </View>
+                    {!isLargeDevice && (
+                        <View style={styles.cardRow}>
+                            <StatCard
+                                icon="inbox-multiple"
+                                iconColor="#fbbc04"
+                                bgColor="#fff3d6"
+                                title="Lotes Activos"
+                                value={lotes.totalLotesActivos}
+                                subtitle={`${lotes.cantidadTotalProducto} unidades`}
+                            />
+                            <StatCard
+                                icon="alert-circle"
+                                iconColor="#f97316"
+                                bgColor="#fed7aa"
+                                title="Pérdidas"
+                                value={perdidas.cantidadPerdida || 0}
+                                subtitle={`${perdidas.totalEventos || 0} eventos`}
+                            />
+                        </View>
+                    )}
+
+                    {isLargeDevice && (
+                        <View style={styles.cardRow}>
+                            <StatCard
+                                icon="alert-circle"
+                                iconColor="#f97316"
+                                bgColor="#fed7aa"
+                                title="Pérdidas"
+                                value={perdidas.cantidadPerdida || 0}
+                                subtitle={`${perdidas.totalEventos || 0} eventos`}
+                            />
+                        </View>
+                    )}
                 </View>
 
                 {/* Estado de Ventas */}
-                <View style={styles.summarySection}>
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Estado de Ventas</Text>
-                    
+
                     <View style={styles.statusContainer}>
                         <View style={styles.statusItem}>
                             <View style={[styles.statusDot, { backgroundColor: '#f59e0b' }]} />
-                            <View style={{ flex: 1 }}>
+                            <View style={styles.statusTextContainer}>
                                 <Text style={styles.statusLabel}>Pendientes</Text>
                                 <Text style={styles.statusValue}>{kpis.ventasPendientes || 0}</Text>
                             </View>
@@ -240,7 +204,7 @@ const Dashboard = ({ navigation }) => {
                         <View style={styles.statusDivider} />
                         <View style={styles.statusItem}>
                             <View style={[styles.statusDot, { backgroundColor: '#10b981' }]} />
-                            <View style={{ flex: 1 }}>
+                            <View style={styles.statusTextContainer}>
                                 <Text style={styles.statusLabel}>Completadas</Text>
                                 <Text style={styles.statusValue}>{kpis.ventasCompletadas || 0}</Text>
                             </View>
@@ -248,35 +212,76 @@ const Dashboard = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Gráfico */}
-                <View style={styles.graphSection}>
+                {/* Gráfico de Ingresos */}
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Ingresos Últimos 7 Días</Text>
-                    {chartData && chartData.length > 0 ? (
-                        <GraphTest 
-                            data={chartData} 
+                    {chartData?.length > 0 ? (
+                        <GraphTest
+                            data={chartData}
                             type="line"
                             title="Ingresos por Día"
                         />
                     ) : (
                         <View style={styles.noMovementsContainer}>
-                            <Icon name="trending-down" size={48} color="#d1d5db" />
-                            <Text style={styles.noMovementsText}>No se ha hecho movimientos estos últimos 7 días</Text>
-                            <TouchableOpacity 
-                                style={styles.statsButton}
+                            <Icon name="trending-down" size={isSmallDevice ? 40 : 48} color="#d1d5db" />
+                            <Text style={styles.noMovementsText}>
+                                No se han hecho movimientos estos últimos 7 días
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.actionButton}
                                 onPress={() => navigation.navigate('estadisticas')}
                             >
                                 <Icon name="chart-box" size={20} color="#fff" />
-                                <Text style={styles.statsButtonText}>Ver más estadísticas</Text>
+                                <Text style={styles.actionButtonText}>Ver más estadísticas</Text>
                             </TouchableOpacity>
                         </View>
+                    )}
+
+                    {/* Estadísticas adicionales */}
+                    {viewEstadisticas && ultimasVentas?.length > 0 && (
+                        <View style={styles.additionalStats}>
+                            <View style={styles.graphContainer}>
+                                <Text style={styles.graphTitle}>Estado de Ventas (Últimas 5)</Text>
+                                <GraphTest
+                                    data={procesarDatosEstados()}
+                                    type="bar"
+                                    title="Distribución de Estados"
+                                />
+                            </View>
+
+                            <View style={styles.graphContainer}>
+                                <Text style={styles.graphTitle}>Productos Más Vendidos</Text>
+                                <GraphTest
+                                    data={procesarDatosProductos()}
+                                    type="bar"
+                                    title="Cantidad por Producto"
+                                />
+                            </View>
+                        </View>
+                    )}
+
+                    {ultimasVentas?.length > 0 && (
+                        <TouchableOpacity
+                            onPress={() => setViewEstadisticas(!viewEstadisticas)}
+                            style={styles.toggleButton}
+                        >
+                            <Text style={styles.toggleButtonText}>
+                                {viewEstadisticas ? 'Ocultar' : 'Ver'} estadísticas detalladas
+                            </Text>
+                            <Icon
+                                name={viewEstadisticas ? "chevron-up" : "chevron-down"}
+                                size={20}
+                                color="#0077cc"
+                            />
+                        </TouchableOpacity>
                     )}
                 </View>
 
                 {/* Últimas Ventas */}
-                {ultimasVentas && ultimasVentas.length > 0 && (
-                    <View style={styles.summarySection}>
+                {ultimasVentas?.length > 0 && (
+                    <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Últimas Ventas</Text>
-                        {ultimasVentas.slice(0, 5).map((venta, index) => (
+                        {ultimasVentas.slice(0, limiteVentas).map((venta, index) => (
                             <View key={index} style={styles.ventaItem}>
                                 <View style={styles.ventaInfo}>
                                     <Text style={styles.ventaCliente} numberOfLines={1}>
@@ -292,9 +297,9 @@ const Dashboard = ({ navigation }) => {
                                     </Text>
                                     <Text style={[
                                         styles.ventaEstado,
-                                        { 
-                                            color: venta.estado === 'pagado' ? '#10b981' : 
-                                                   venta.estado === 'pendiente' ? '#f59e0b' : '#ef4444'
+                                        {
+                                            color: venta.estado === 'pagado' ? '#10b981' :
+                                                venta.estado === 'pendiente' ? '#f59e0b' : '#ef4444'
                                         }
                                     ]}>
                                         {venta.estado}
@@ -302,14 +307,24 @@ const Dashboard = ({ navigation }) => {
                                 </View>
                             </View>
                         ))}
+
+                        {limiteVentas < ultimasVentas.length && (
+                            <TouchableOpacity
+                                style={styles.verMasButton}
+                                onPress={() => setLimiteVentas(prev => prev + 5)}
+                            >
+                                <Icon name="chevron-down" size={20} color="#0077cc" />
+                                <Text style={styles.verMasButtonText}>
+                                    Ver más ({ultimasVentas.length - limiteVentas} restantes)
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </ScrollView>
         </View>
     );
 };
-
-export default Dashboard;
 
 const styles = StyleSheet.create({
     container: {
@@ -318,8 +333,11 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flex: 1,
-        paddingHorizontal: 16,
-        paddingTop: 16,
+    },
+    scrollContentContainer: {
+        paddingHorizontal: isSmallDevice ? 12 : isMediumDevice ? 16 : 24,
+        paddingTop: isSmallDevice ? 12 : 16,
+        paddingBottom: 100,
     },
     loaderContainer: {
         flex: 1,
@@ -328,7 +346,7 @@ const styles = StyleSheet.create({
     },
     loaderText: {
         marginTop: 12,
-        fontSize: 16,
+        fontSize: isSmallDevice ? 14 : 16,
         color: '#6b7280',
     },
     errorContainer: {
@@ -339,7 +357,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         marginTop: 16,
-        fontSize: 16,
+        fontSize: isSmallDevice ? 14 : 16,
         color: '#ef4444',
         textAlign: 'center',
         marginBottom: 24,
@@ -358,74 +376,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
+    section: {
+        marginBottom: isSmallDevice ? 20 : 24,
+    },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: isSmallDevice ? 16 : isLargeDevice ? 20 : 18,
         fontWeight: '700',
         color: '#1f2937',
-        marginBottom: 16,
-    },
-    summarySection: {
-        marginBottom: 24,
+        marginBottom: isSmallDevice ? 12 : 16,
     },
     cardRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginBottom: 12,
-        gap: 12,
-    },
-    statCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 16,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    statCardLarge: {
-        flexDirection: 'row',
-        paddingVertical: 20,
-    },
-    statIconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statContent: {
-        flex: 1,
-    },
-    statLabel: {
-        fontSize: 13,
-        color: '#9ca3af',
-        marginBottom: 4,
-    },
-    statValue: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1f2937',
-    },
-    statValueLarge: {
-        fontSize: 24,
-    },
-    statSubtitle: {
-        fontSize: 12,
-        color: '#d1d5db',
-        marginTop: 2,
-    },
-    graphSection: {
-        marginBottom: 24,
+        gap: isSmallDevice ? 8 : 12,
     },
     statusContainer: {
         flexDirection: 'row',
         backgroundColor: '#ffffff',
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: isSmallDevice ? 12 : 16,
+        padding: isSmallDevice ? 12 : 16,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowRadius: 8,
@@ -436,7 +407,10 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: isSmallDevice ? 8 : 12,
+    },
+    statusTextContainer: {
+        flex: 1,
     },
     statusDot: {
         width: 12,
@@ -444,11 +418,11 @@ const styles = StyleSheet.create({
         borderRadius: 6,
     },
     statusLabel: {
-        fontSize: 13,
+        fontSize: isSmallDevice ? 11 : 13,
         color: '#9ca3af',
     },
     statusValue: {
-        fontSize: 18,
+        fontSize: isSmallDevice ? 16 : 18,
         fontWeight: '700',
         color: '#1f2937',
         marginTop: 4,
@@ -456,12 +430,77 @@ const styles = StyleSheet.create({
     statusDivider: {
         width: 1,
         backgroundColor: '#e5e7eb',
-        marginHorizontal: 16,
+        marginHorizontal: isSmallDevice ? 12 : 16,
+    },
+    noMovementsContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: isSmallDevice ? 40 : 50,
+        gap: isSmallDevice ? 12 : 16,
+        backgroundColor: '#f9fafb',
+        borderRadius: 12,
+        paddingHorizontal: isSmallDevice ? 16 : 20,
+    },
+    noMovementsText: {
+        fontSize: isSmallDevice ? 14 : 16,
+        color: '#6b7280',
+        textAlign: 'center',
+        fontWeight: '500',
+        marginBottom: 8,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        backgroundColor: '#0077cc',
+        paddingHorizontal: isSmallDevice ? 16 : 20,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+    },
+    actionButtonText: {
+        color: '#fff',
+        fontSize: isSmallDevice ? 14 : 16,
+        fontWeight: '600',
+    },
+    additionalStats: {
+        marginTop: 16,
+        gap: 16,
+    },
+    graphContainer: {
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        padding: isSmallDevice ? 12 : 16,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+    },
+    graphTitle: {
+        fontSize: isSmallDevice ? 14 : 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 12,
+    },
+    toggleButton: {
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        marginTop: 12,
+    },
+    toggleButtonText: {
+        color: '#0077cc',
+        fontSize: isSmallDevice ? 12 : 13,
+        fontWeight: '500',
     },
     ventaItem: {
         backgroundColor: '#ffffff',
         borderRadius: 12,
-        padding: 14,
+        padding: isSmallDevice ? 12 : 14,
         marginBottom: 10,
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -474,15 +513,16 @@ const styles = StyleSheet.create({
     },
     ventaInfo: {
         flex: 1,
+        marginRight: 12,
     },
     ventaCliente: {
-        fontSize: 14,
+        fontSize: isSmallDevice ? 13 : 14,
         fontWeight: '600',
         color: '#1f2937',
         marginBottom: 2,
     },
     ventaProducto: {
-        fontSize: 12,
+        fontSize: isSmallDevice ? 11 : 12,
         color: '#9ca3af',
     },
     ventaMonto: {
@@ -490,54 +530,33 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     ventaValor: {
-        fontSize: 14,
+        fontSize: isSmallDevice ? 13 : 14,
         fontWeight: '700',
         color: '#0077cc',
     },
     ventaEstado: {
-        fontSize: 11,
+        fontSize: isSmallDevice ? 10 : 11,
         fontWeight: '600',
         textTransform: 'capitalize',
     },
-    noDataContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 40,
-        gap: 8,
-    },
-    noDataText: {
-        fontSize: 14,
-        color: '#9ca3af',
-    },
-    noMovementsContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 50,
-        gap: 16,
-        backgroundColor: '#f9fafb',
-        borderRadius: 12,
-        paddingHorizontal: 20,
-    },
-    noMovementsText: {
-        fontSize: 16,
-        color: '#6b7280',
-        textAlign: 'center',
-        fontWeight: '500',
-        marginBottom: 8,
-    },
-    statsButton: {
+    verMasButton: {
         flexDirection: 'row',
-        backgroundColor: '#0077cc',
+        backgroundColor: '#ffffff',
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 8,
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        marginTop: 8,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: '#0077cc',
     },
-    statsButtonText: {
-        color: '#fff',
-        fontSize: 16,
+    verMasButtonText: {
+        color: '#0077cc',
+        fontSize: isSmallDevice ? 12 : 14,
         fontWeight: '600',
     },
 });
+
+export default Dashboard;

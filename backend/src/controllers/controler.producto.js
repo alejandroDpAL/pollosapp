@@ -1,21 +1,12 @@
 import { pool } from "../database/conexion.js";
 
-export const listarProductos = async (req, res) => {
+export const listarProductos = async (_req, res) => {
   try {
-    const sql = `SELECT * FROM productos`;
-    const [rows] = await pool.query(sql);
-
-    if (rows.length > 0) {
-      res.status(200).json(rows);
-    } else {
-      res.status(404).json({
-        message: "No se encontraron productos disponibles",
-      });
-    }
-
+    const [rows] = await pool.query("SELECT * FROM productos");
+    return res.status(200).json(rows);
   } catch (error) {
     console.error("Error al listar productos:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "ERROR DEL SERVIDOR: " + error.message,
     });
   }
@@ -25,7 +16,7 @@ export const listarProductos = async (req, res) => {
 
 
 export const CrearProductos = async (req, res) => {
-  const { nombre, negocio_id } = req.body;
+  const { nombre, negocio_id, precio = 0, cantidad = 0 } = req.body;
 
   try {
     // Validar campos obligatorios
@@ -40,15 +31,9 @@ export const CrearProductos = async (req, res) => {
       });
     }
 
-    const sql = `
-      INSERT INTO productos (nombre, negocio_id) 
-      VALUES (?, ?)
-    `;
+    const sql = "INSERT INTO productos (nombre, negocio_id, precio, cantidad) VALUES (?, ?, ?, ?)";
 
-    const [rows] = await pool.query(sql, [
-      nombre,
-      negocio_id
-    ]);
+    const [rows] = await pool.query(sql, [nombre, negocio_id, precio || 0, cantidad || 0]);
 
     if (rows.affectedRows > 0) {
       return res.status(201).json({
@@ -73,23 +58,22 @@ export const CrearProductos = async (req, res) => {
 
 export const ActualizarProducto = async (req, res) => {
   const { id } = req.params;
-  const { nombre } = req.body;
+  const { nombre, negocio_id, precio = 0, cantidad = 0 } = req.body;
 
   try {
-    if (!nombre) {
+    if (!nombre || !negocio_id) {
       return res.status(400).json({
-        message: "El nombre es obligatorio."
+        message: "Los campos nombre y negocio_id son obligatorios."
       });
     }
 
-    const sql = `
-      UPDATE productos
-      SET nombre = ?
-      WHERE id = ?
-    `;
+    const sql = "UPDATE productos SET nombre = ?, negocio_id = ?, precio = ?, cantidad = ? WHERE id = ?";
 
     const [result] = await pool.query(sql, [
       nombre,
+      negocio_id,
+      precio || 0,
+      cantidad || 0,
       id,
     ]);
 
@@ -110,9 +94,7 @@ export const EliminarProductos = async (req, res) => {
   try {
     const { id } = req.params;
 
-    let sql = "DELETE FROM productos WHERE id = ?";
-
-    const [result] = await pool.query(sql, [id]);
+    const [result] = await pool.query("DELETE FROM productos WHERE id = ?", [id]);
 
     if (result.affectedRows > 0) {
       res.status(200).json({
@@ -180,25 +162,16 @@ export const listarProductosPorNegocio = async (req, res) => {
       });
     }
 
-    const sql = `
-      SELECT * FROM productos
-      WHERE negocio_id = ?
-      ORDER BY nombre ASC
-    `;
+    const [rows] = await pool.query(
+      "SELECT * FROM productos WHERE negocio_id = ? ORDER BY nombre ASC",
+      [negocio_id]
+    );
 
-    const [rows] = await pool.query(sql, [negocio_id]);
-
-    if (rows.length > 0) {
-      res.status(200).json(rows);
-    } else {
-      res.status(404).json({
-        message: "No se encontraron productos para este negocio."
-      });
-    }
+    return res.status(200).json(rows);
 
   } catch (error) {
     console.error("Error al obtener productos por negocio:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Error en el servidor.",
       error: error.message
     });

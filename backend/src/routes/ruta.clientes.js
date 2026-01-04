@@ -11,6 +11,6 @@ routeClientes.post('/registrar', verifyToken, validateCreateClient, CrearCliente
 routeClientes.put('/actualizar/:id', verifyToken, validateUpdateClient, ActualizarCliente);
 routeClientes.delete('/eliminar/:id', verifyToken, validateClientId, EliminarCliente);
 routeClientes.get('/ClienteUsuario/:id_usuario', verifyToken, validateClientIdUsuario, GetClientesByIdUsuario);
-routeClientes.get('/usuario/:id/compras', verifyToken, validateClientIdUsuario, ObtenerComprasDeCliente);
+routeClientes.get('/usuario/:id/compras', verifyToken, validateClientId, ObtenerComprasDeCliente);
 
 export default routeClientes;

@@ -15,11 +15,11 @@ export const get_tipo_negocio = async (req, res) => {
 
 // POST crear tipo de negocio
 export const create_negocio = async (req, res) => {
-  const { nombre, descripcion, activo, logo, correo, fecha, telefono } = req.body;
+  const { usuario_id, nombre, descripcion, activo, logo, correo, fecha, telefono } = req.body;
 
   try {
     // Validar campos obligatorios
-    const camposObligatorios = { nombre, logo, correo, telefono };
+    const camposObligatorios = { usuario_id, nombre, logo, correo, telefono };
     const faltantes = Object.entries(camposObligatorios)
       .filter(([_, valor]) => valor === undefined || valor === null || valor.toString().trim() === "")
       .map(([campo]) => campo);
@@ -31,12 +31,19 @@ export const create_negocio = async (req, res) => {
     }
 
     // SQL de inserción
+    if (isNaN(usuario_id)) {
+      return res.status(400).json({
+        message: "El ID del usuario debe ser numérico."
+      });
+    }
+
     const sql = `
-      INSERT INTO negocio (nombre, descripcion, activo, logo, correo, fecha, telefono)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO negocio (usuario_id, nombre, descripcion, activo, logo, correo, fecha, telefono)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await pool.query(sql, [
+      usuario_id,
       nombre,
       descripcion || null,
       activo !== undefined ? activo : 1, // por defecto activo

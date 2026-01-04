@@ -1,82 +1,78 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HeaderPrincipal from "../../components/layout/header";
-import Modal from "../../components/common/Modal.componet";
+import DraggableModal from "../../components/common/DraggableModal";
+import ClientFormFields from "../../components/clients/ClientFormFields";
 import ModalAlert from "../../components/common/Modal.Alet.jsx";
-import {
-  createClient,
-  updateClient,
-  deleteClient,
-  getClientById,
-} from "../../Hook/Api/clientApi";
+import { getClientById, deleteClient } from "../../Hook/Api/clientApi";
 import { useAuth } from "../../Hook/context/AuthContext.jsx";
+import { useNegocio } from "../../Hook/context/NegocioContext.jsx";
 import { useNavigation } from "@react-navigation/native";
+import { useClientForm } from "../../Hook/hooks/useClientForm.js";
 
 const Clients = () => {
+  const { user } = useAuth();
+  const { negocioActivo } = useNegocio();
+  const navigation = useNavigation();
+  
   const [clients, setClients] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
-  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
-
-  const [formData, setFormData] = useState({
-    nombre: "",
-    correo: "",
-    telefono: "",
-    direccion: "",
+  const [alertModal, setAlertModal] = useState({ 
+    visible: false, 
+    title: '', 
+    message: '', 
+    type: 'info', 
+    onConfirm: null 
   });
+  const [loading, setLoading] = useState(false);
 
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      if (!user || !user.id) return;
-
-      try {
-        const data = await getClientById(user.id);
-        setClients(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error al obtener los clientes:", err);
-        setAlertModal({
-          visible: true,
-          title: 'Error',
-          message: 'No se pudieron cargar los clientes del usuario.',
-          type: 'error',
-          onConfirm: null
-        });
-      }
-    };
-
-    fetchClients();
-  }, [user]);
-
-  // Manejar cambios de input
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Resetear formulario
-  const resetForm = () => {
-    setFormData({ nombre: "", correo: "", telefono: "", direccion: "" });
-    setIsEditing(false);
-    setSelectedClient(null);
-  };
-
-  // Abrir modal para nuevo cliente
-  const handleOpenAddModal = () => {
-    resetForm();
-    setIsEditing(false);
-    setModalVisible(true);
-  };
-
-  // Guardar o actualizar cliente
-  const handleSaveClient = async () => {
-    if (!formData.nombre || !formData.telefono) {
+  // Usar el hook personalizado para el formulario
+  const {
+    formData,
+    loading: formLoading,
+    handleInputChange,
+    resetForm,
+    loadClientData,
+    saveClient,
+  } = useClientForm(
+    user,
+    negocioActivo,
+    async () => {
+      // Callback de éxito: recargar clientes y cerrar modal
+      await fetchClients();
+      setModalVisible(false);
+      setIsEditing(false);
+      setSelectedClient(null);
       setAlertModal({
         visible: true,
-        title: 'Campos incompletos',
-        message: 'Por favor completa los campos requeridos.',
+        title: 'Éxito',
+        message: isEditing ? 'Cliente actualizado con éxito.' : 'Cliente registrado con éxito.',
+        type: 'success',
+        onConfirm: null
+      });
+    },
+    (error) => {
+      // Callback de error
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: error || 'Ocurrió un error al guardar el cliente.',
+        type: 'error',
+        onConfirm: null
+      });
+    }
+  );
+
+  // Obtener clientes del usuario y negocio activo
+  const fetchClients = async () => {
+    if (!user || !user.id || !negocioActivo || !negocioActivo.id) {
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'Debes seleccionar un negocio primero.',
         type: 'error',
         onConfirm: null
       });
@@ -84,70 +80,73 @@ const Clients = () => {
     }
 
     try {
-
-      let message = "";
-
-      if (isEditing && selectedClient) {
-        await updateClient(selectedClient.id, formData);
-        message = "Cliente actualizado con exito "
-      } else {
-        await createClient({ ...formData, usuarioId: user.id });
-        message = "Cliente registrado con exito "
-      }
-
-
-      // Recargar la lista actualizada
-      const updatedClients = await getClientById(user.id);
-      setClients(Array.isArray(updatedClients) ? updatedClients : []);
-      setModalVisible(false);
-      resetForm();
-      setAlertModal({
-        visible: true,
-        title: 'Éxito',
-        message: message,
-        type: 'success',
-        onConfirm: null
-      });
-
-    } catch (error) {
-      console.error("Error al guardar el cliente:", error);
+      setLoading(true);
+      const data = await getClientById(user.id, negocioActivo.id);
+      setClients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al obtener los clientes:", err);
       setAlertModal({
         visible: true,
         title: 'Error',
-        message: 'No se pudo actualizar el cliente. Intenta nuevamente.',
+        message: 'No se pudieron cargar los clientes. Intenta nuevamente.',
         type: 'error',
         onConfirm: null
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Editar cliente
-  const handleEditClient = (client) => {
-    setFormData(client);
-    setSelectedClient(client);
-    setIsEditing(true);
+  useEffect(() => {
+    fetchClients();
+  }, [user, negocioActivo]);
+
+  // Abrir modal para nuevo cliente
+  const handleOpenAddModal = () => {
+    resetForm();
+    setIsEditing(false);
+    setSelectedClient(null);
     setModalVisible(true);
   };
 
-  // Eliminar cliente
+  // Abrir modal para editar cliente
+  const handleOpenEditModal = (client) => {
+    setSelectedClient(client);
+    setIsEditing(true);
+    loadClientData(client);
+    setModalVisible(true);
+  };
+
+  // Guardar cliente (crear o actualizar)
+  const handleSaveClient = async () => {
+    const clientId = isEditing && selectedClient ? selectedClient.id : null;
+    await saveClient(clientId);
+  };
+
+  // Eliminar cliente con confirmación
   const handleDeleteClient = (client) => {
     setAlertModal({
       visible: true,
-      title: 'Eliminar cliente',
-      message: `¿Deseas eliminar a ${client.nombre}?`,
+      title: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar a ${client.nombre}?`,
       type: 'warning',
       onConfirm: async () => {
         try {
           await deleteClient(client.id);
-          const updatedClients = await getClientById(user.id);
-          setClients(Array.isArray(updatedClients) ? updatedClients : []);
-          setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
-        } catch (err) {
-          console.error("Error al eliminar cliente:", err);
+          await fetchClients();
+          setAlertModal({
+            visible: true,
+            title: 'Éxito',
+            message: 'Cliente eliminado correctamente.',
+            type: 'success',
+            onConfirm: null
+          });
+        } catch (error) {
+          console.error("Error al eliminar cliente:", error);
           setAlertModal({
             visible: true,
             title: 'Error',
-            message: 'No se pudo eliminar el cliente.',
+            message: 'No se pudo eliminar el cliente. Intenta nuevamente.',
             type: 'error',
             onConfirm: null
           });
@@ -156,7 +155,10 @@ const Clients = () => {
     });
   };
 
-  const navigation = useNavigation()
+  // Navegar a los detalles del cliente
+  const handleClientPress = (client) => {
+    navigation.navigate("InfoClient", { client });
+  };
 
   return (
     <>
@@ -168,13 +170,14 @@ const Clients = () => {
         ) : (
           clients.map((client) => (
             <View key={client.id} style={styles.card}>
-              <TouchableOpacity onPress={() => navigation.navigate("infoclient",{client})}>              
+              <TouchableOpacity onPress={() => navigation.navigate("infoclient", {client})}>              
                 <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                }}
-                style={styles.avatar}
-              /></TouchableOpacity>
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                  }}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
 
               <View style={styles.info}>
                 <Text style={styles.name}>{client.nombre}</Text>
@@ -185,7 +188,7 @@ const Clients = () => {
                 </Text>
               </View>
               <View style={styles.actions}>
-                <TouchableOpacity onPress={() => handleEditClient(client)}>
+                <TouchableOpacity onPress={() => handleOpenEditModal(client)}>
                   <Icon name="pencil" size={22} color="#007bff" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteClient(client)}>
@@ -201,59 +204,60 @@ const Clients = () => {
         <Icon name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
-      <Modal
+      {/* Modal para agregar/editar cliente */}
+      <DraggableModal
         visible={modalVisible}
-        title={isEditing ? "Editar cliente" : "Agregar nuevo cliente"}
-        content={
-          <ScrollView>
-            <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                placeholder="Nombre Cliente"
-                value={formData.nombre}
-                onChangeText={(text) => handleInputChange("nombre", text)}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Correo electrónico"
-                value={formData.correo}
-                onChangeText={(text) => handleInputChange("correo", text)}
-                keyboardType="email-address"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Teléfono"
-                value={formData.telefono}
-                onChangeText={(text) => handleInputChange("telefono", text)}
-                keyboardType="phone-pad"
-              />
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Dirección"
-                value={formData.direccion}
-                onChangeText={(text) => handleInputChange("direccion", text)}
-                multiline
-              />
-            </View>
-          </ScrollView>
-        }
         onClose={() => {
           setModalVisible(false);
           resetForm();
+          setIsEditing(false);
+          setSelectedClient(null);
         }}
-        onCancel={() => {
-          setModalVisible(false);
-          resetForm();
-        }}
-        onSave={handleSaveClient}
-      />
+        title={isEditing ? "Editar Cliente" : "Nuevo Cliente"}
+      >
+        <ClientFormFields
+          formData={formData}
+          onInputChange={handleInputChange}
+          disabled={formLoading}
+        />
 
+        <View style={styles.modalActions}>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.cancelButton]}
+            onPress={() => {
+              setModalVisible(false);
+              resetForm();
+              setIsEditing(false);
+              setSelectedClient(null);
+            }}
+            disabled={formLoading}
+          >
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modalButton, styles.saveButton, formLoading && styles.disabledButton]}
+            onPress={handleSaveClient}
+            disabled={formLoading}
+          >
+            {formLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>
+                {isEditing ? "Actualizar" : "Guardar"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </DraggableModal>
+
+      {/* Modal de alertas */}
       <ModalAlert
         visible={alertModal.visible}
         title={alertModal.title}
         message={alertModal.message}
         type={alertModal.type}
-        onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
+        onClose={() => setAlertModal({ ...alertModal, visible: false })}
         onConfirm={alertModal.onConfirm}
       />
     </>
@@ -270,7 +274,7 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   scrollContent: {
-    paddingBottom:60,
+    paddingBottom: 60,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -326,9 +330,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     bottom: 20,
-    // backgroundColor: "#0077cc",
     backgroundColor: "#ff6b6b",
-
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -339,18 +341,42 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 8,
   },
-  form: {
-    marginTop: 10,
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 20,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    backgroundColor: "#ffffff",
-    fontSize: 15,
-    color: "#374151",
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  saveButton: {
+    backgroundColor: "#0077cc",
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
