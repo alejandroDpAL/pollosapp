@@ -234,7 +234,7 @@ export const ObtenerComprasDeCliente = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+   
     res.status(500).json({
       message: "Error del servidor.",
       error: error.message

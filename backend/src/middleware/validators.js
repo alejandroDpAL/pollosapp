@@ -273,16 +273,19 @@ export const validateCreateLote = [
     .isInt({ min: 1 }).withMessage("El ID del producto debe ser un número entero positivo"),
   body("cantidad_inicial")
     .notEmpty().withMessage("La cantidad inicial es obligatoria")
-    .isFloat({ min: 0 }).withMessage("La cantidad inicial debe ser un número positivo"),
-  body("cantidad_disponible")
+    .isInt({ min: 1 }).withMessage("La cantidad inicial debe ser un número entero mayor a 0"),
+  body("cantidad_actual")
+    .notEmpty().withMessage("La cantidad actual es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad actual debe ser un número entero mayor a 0"),
+  body("precio")
+    .notEmpty().withMessage("El precio es obligatorio")
+    .isFloat({ min: 0.01 }).withMessage("El precio debe ser mayor a 0"),
+  body("fecha")
+    .notEmpty().withMessage("La fecha es obligatoria")
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage("La fecha debe estar en formato YYYY-MM-DD"),
+  body("descripcion")
     .optional()
-    .isFloat({ min: 0 }).withMessage("La cantidad disponible debe ser un número positivo"),
-  body("fecha_entrada")
-    .notEmpty().withMessage("La fecha de entrada es obligatoria")
-    .isISO8601().withMessage("La fecha de entrada debe ser una fecha válida"),
-  body("estado")
-    .optional()
-    .isIn(["activo", "agotado", "cerrado"]).withMessage("El estado debe ser 'activo', 'agotado' o 'cerrado'"),
+    .isString().withMessage("La descripción debe ser una cadena de texto"),
   handleValidationErrors
 ];
 
@@ -291,15 +294,27 @@ export const validateUpdateLote = [
     .notEmpty().withMessage("El ID del lote es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID debe ser un número entero positivo"),
   body("nombre")
-    .optional()
+    .notEmpty().withMessage("El nombre del lote es obligatorio")
     .isLength({ min: 2, max: 100 }).withMessage("El nombre debe tener entre 2 y 100 caracteres")
     .trim(),
-  body("cantidad_disponible")
+  body("producto_id")
+    .notEmpty().withMessage("El ID del producto es obligatorio")
+    .isInt({ min: 1 }).withMessage("El ID del producto debe ser un número entero positivo"),
+  body("cantidad_inicial")
+    .notEmpty().withMessage("La cantidad inicial es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad inicial debe ser un número entero mayor a 0"),
+  body("cantidad_actual")
+    .notEmpty().withMessage("La cantidad actual es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad actual debe ser un número entero mayor a 0"),
+  body("precio")
+    .notEmpty().withMessage("El precio es obligatorio")
+    .isFloat({ min: 0.01 }).withMessage("El precio debe ser mayor a 0"),
+  body("fecha")
+    .notEmpty().withMessage("La fecha es obligatoria")
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage("La fecha debe estar en formato YYYY-MM-DD"),
+  body("descripcion")
     .optional()
-    .isFloat({ min: 0 }).withMessage("La cantidad disponible debe ser un número positivo"),
-  body("estado")
-    .optional()
-    .isIn(["activo", "agotado", "cerrado"]).withMessage("El estado debe ser 'activo', 'agotado' o 'cerrado'"),
+    .isString().withMessage("La descripción debe ser una cadena de texto"),
   handleValidationErrors
 ];
 

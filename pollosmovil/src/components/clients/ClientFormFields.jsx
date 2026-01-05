@@ -2,12 +2,6 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-/**
- * Componente reutilizable con los campos del formulario de cliente
- * @param {Object} formData - Datos del formulario
- * @param {Function} onInputChange - Callback para cambios en inputs
- * @param {boolean} disabled - Deshabilitar inputs
- */
 const ClientFormFields = ({ formData, onInputChange, disabled = false }) => {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>

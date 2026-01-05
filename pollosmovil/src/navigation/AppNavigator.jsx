@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Dashboard from "../pages/Business/Dashboard";
 import Estadisticas from "../pages/Statistics/estadisticas.jsx";
 import Ajustes from "../pages/Settings/ajustes";
-import Productos from "../pages/Products/productos";
+import Seleccion from "../pages/Products/seleccion";
 import Perfil from "../pages/Users/Perfil";
 import Modal from "../components/common/Modal.componet";
 import clientes from "../pages/Users/clientes.jsx";
@@ -36,7 +36,7 @@ export default function AppNavigator({ navigationRef, currentRoute }) {
                 <Stack.Screen name="negocios" component={negocios} />
                 <Stack.Screen name="estadisticas" component={Estadisticas} />
                 <Stack.Screen name="ajustes" component={Ajustes} />
-                <Stack.Screen name="productos" component={Productos} />
+                <Stack.Screen name="productos" component={Seleccion} />
                 <Stack.Screen name="clientes" component={clientes} />
                 <Stack.Screen name="Perfil" component={Perfil} />
                 <Stack.Screen name="modal" component={Modal} />
