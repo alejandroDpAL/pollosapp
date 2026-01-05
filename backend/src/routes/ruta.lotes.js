@@ -3,7 +3,7 @@ import { verifyToken } from "../middleware/auth.middleware.js";
 import { 
   get_lotes, 
   get_lotesByUsuario, 
-  get_lotesByNegocio,  // ⭐ NUEVA FUNCIÓN
+  get_lotesByNegocio, 
   create_lote, 
   update_lote, 
   ObtenerDetalleLote, 
@@ -14,12 +14,9 @@ import { validateCreateLote, validateUpdateLote, validateLoteId, validateUsuario
 
 const routeLotes = Router();
 
-// Todas las rutas requieren autenticación
-// ⭐ RUTAS ESPECÍFICAS PRIMERO (más específicas antes que dinámicas)
 routeLotes.get("/listar", verifyToken, get_lotes);
 routeLotes.get("/stock", verifyToken, ObtenerStockGeneral);
 
-// ⭐ NUEVA RUTA: Obtener lotes por negocio específico (LA PRINCIPAL)
 routeLotes.get("/negocio/:negocio_id", verifyToken, get_lotesByNegocio);
 
 // Compatibilidad: Obtener lotes por usuario (todos sus negocios)

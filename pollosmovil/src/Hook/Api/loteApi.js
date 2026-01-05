@@ -19,22 +19,22 @@ export const getLotesByUsuario = async (usuarioId) => {
   }
 };
 
-// ⭐ NUEVA FUNCIÓN: Obtener lotes por negocio específico
+
 // Solo retorna lotes del negocio activo del usuario autenticado
 export const getLotesByNegocio = async (negocioId) => {
   try {
     if (!negocioId) {
-      console.error('❌ No hay negocioId proporcionado');
+      console.error('No hay negocioId proporcionado');
       throw new Error('negocioId es requerido');
     }
 
-    console.log('🔄 Obteniendo lotes para negocio:', negocioId);
+    console.log(' Obteniendo lotes para negocio:', negocioId);
     const response = await api.get(`/lote/negocio/${negocioId}`);
     
-    console.log('✅ Respuesta lotes por negocio:', response.data);
+    console.log(' Respuesta lotes por negocio:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ Error al obtener lotes por negocio:', error.message);
+    console.error(' Error al obtener lotes por negocio:', error.message);
     throw error;
   }
 };

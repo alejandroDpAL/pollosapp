@@ -14,11 +14,7 @@ export const get_lotes = async (req, res) => {
   }
 };
 
-/**
- * ⭐ NUEVA FUNCIÓN: Obtener lotes por negocio específico
- * Solo retorna lotes del negocio activo del usuario autenticado
- * Esto garantiza que cada usuario solo vea sus propios lotes
- */
+
 export const get_lotesByNegocio = async (req, res) => {
   const { negocio_id } = req.params;
   const usuario_id = req.user?.id; // Del token JWT (middleware auth)
