@@ -140,13 +140,22 @@ export const EliminarCliente = async (req, res) => {
 export const GetClientesByIdUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
+    const { negocio_id } = req.query;
 
     if (!id_usuario) {
       return res.status(400).json({ message: "El parámetro id_usuario es requerido" });
     }
 
-    const sql = "SELECT * FROM clientes WHERE usuario_id = ?";
-    const [rows] = await pool.query(sql, [id_usuario]);
+    let sql = "SELECT * FROM clientes WHERE usuario_id = ?";
+    const params = [id_usuario];
+
+    // Si se envía negocio_id, filtramos para evitar mostrar clientes de otros negocios
+    if (negocio_id) {
+      sql += " AND negocio_id = ?";
+      params.push(negocio_id);
+    }
+
+    const [rows] = await pool.query(sql, params);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "No se encontraron clientes para este usuario" });
@@ -168,7 +177,7 @@ export const ObtenerComprasDeCliente = async (req, res) => {
       return res.status(400).json({ message: "Se requiere el ID del cliente." });
     }
 
-    //  Obtener  información de compras
+    //  Obtener  información de compras, asegurando que corresponden al negocio del cliente
     const sqlCompras = `
       SELECT 
         v.id AS venta_id,
@@ -176,10 +185,11 @@ export const ObtenerComprasDeCliente = async (req, res) => {
         v.precio_unitario,
         v.valor_total,
         v.fecha,
+        v.lote_id,
+        v.estado,
 
         p.id AS producto_id,
         p.nombre AS producto_nombre,
-        p.costo AS producto_costo,
 
         l.id AS lote_id,
         l.nombre AS lote_nombre,
@@ -188,10 +198,12 @@ export const ObtenerComprasDeCliente = async (req, res) => {
         u.id AS usuario_id,
         u.nombre AS usuario_nombre
       FROM ventas v
-      LEFT JOIN productos p ON v.producto_id = p.id
       LEFT JOIN lotes l ON v.lote_id = l.id
+      LEFT JOIN productos p ON p.id = COALESCE(v.producto_id, l.producto_id)
+      LEFT JOIN clientes c ON v.cliente_id = c.id
       LEFT JOIN usuarios u ON v.usuario_id = u.id
       WHERE v.cliente_id = ?
+        AND (p.negocio_id IS NULL OR p.negocio_id = c.negocio_id)
       ORDER BY v.fecha DESC
     `;
 
@@ -222,7 +234,7 @@ export const ObtenerComprasDeCliente = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+   
     res.status(500).json({
       message: "Error del servidor.",
       error: error.message

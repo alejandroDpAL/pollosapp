@@ -392,51 +392,6 @@ const Estadisticas = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Indicadores de Rendimiento */}
-        <ChartCard title="Indicadores de Rendimiento">
-          {indicadoresProgreso.data.length > 0 ? (
-            <>
-              <ProgressChart
-                data={indicadoresProgreso}
-                width={chartWidth}
-                height={220}
-                strokeWidth={16}
-                radius={32}
-                chartConfig={{
-                  backgroundGradientFrom: "#ffffff",
-                  backgroundGradientTo: "#ffffff",
-                  color: (opacity = 1, index) => {
-                    const colors = ["rgba(16, 185, 129, 1)", "rgba(139, 92, 246, 1)", "rgba(0, 119, 204, 1)"];
-                    return colors[index] || `rgba(0, 119, 204, ${opacity})`;
-                  },
-                  labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
-                  style: { borderRadius: 12 }
-                }}
-                hideLegend={false}
-                style={styles.chart}
-              />
-              <View style={styles.legendContainer}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-                  <Text style={styles.legendText}>Margen de Ganancia: {estadisticas.kpis.margenGanancia}%</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#8b5cf6' }]} />
-                  <Text style={styles.legendText}>Conversión Clientes: {estadisticas.kpis.tasaConversion}%</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#0077cc' }]} />
-                  <Text style={styles.legendText}>Eficiencia Ventas: {((estadisticas.kpis.ventasCompletadas / Math.max(estadisticas.kpis.totalVentas, 1)) * 100).toFixed(1)}%</Text>
-                </View>
-              </View>
-            </>
-          ) : (
-            <View style={styles.noDataContainer}>
-              <Icon name="chart-box-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.noDataText}>Sin datos suficientes para mostrar indicadores</Text>
-            </View>
-          )}
-        </ChartCard>
 
         {/* Tendencia de Ingresos */}
         <ChartCard 

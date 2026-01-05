@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import ModalAlert from '../../components/common/Modal.Alet.jsx';
-import { getNegociosByUsuario } from '../../Hook/Api/negocioApi';
+import DraggableModal from "../../components/common/DraggableModal";
+import { getNegociosByUsuario, crearNegocio } from '../../Hook/Api/negocioApi';
 import { useAuth } from '../../Hook/context/AuthContext';
 import { useNegocio } from '../../Hook/context/NegocioContext';
 
@@ -19,11 +21,26 @@ const SelectNegocio = ({ navigation }) => {
   const [negocios, setNegocios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [seleccionando, setSeleccionando] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formNegocio, setFormNegocio] = useState({
+    nombre: '',
+    descripcion: '',
+    telefono: '',
+    correo: '',
+    logo: '',
+  });
+  const [errors, setErrors] = useState({});
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'info', onConfirm: null });
 
   useEffect(() => {
     cargarNegocios();
   }, []);
+
+  const abrirModalCrear = () => {
+    setErrors({});
+    setModalVisible(true);
+  };
 
   const cargarNegocios = async () => {
     try {
@@ -40,6 +57,72 @@ const SelectNegocio = ({ navigation }) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormNegocio((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formNegocio.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio';
+    if (!formNegocio.telefono.trim()) newErrors.telefono = 'El telefono es obligatorio';
+    if (!formNegocio.correo.trim()) {
+      newErrors.correo = 'El correo es obligatorio';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formNegocio.correo.trim())) {
+      newErrors.correo = 'Correo invalido';
+    }
+    if (!formNegocio.logo.trim()) newErrors.logo = 'El logo es obligatorio';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleCrearNegocio = async () => {
+    if (creating) return;
+    if (!validateForm()) return;
+
+    setCreating(true);
+    try {
+      const payload = {
+        ...formNegocio,
+        activo: 1,
+        usuario_id: user.id,
+      };
+
+      const response = await crearNegocio(payload);
+      const nuevoNegocio = {
+        ...formNegocio,
+        id: response?.id || Date.now(),
+        usuario_id: user.id,
+        activo: 1,
+      };
+
+      setNegocios((prev) => [nuevoNegocio, ...prev]);
+      setFormNegocio({ nombre: '', descripcion: '', telefono: '', correo: '', logo: '' });
+      setModalVisible(false);
+      setAlertModal({
+        visible: true,
+        title: 'Negocio creado',
+        message: `Registraste: ${formNegocio.nombre}\nCorreo: ${formNegocio.correo}\nTel: ${formNegocio.telefono}`,
+        type: 'success',
+        onConfirm: null,
+      });
+    } catch (error) {
+      console.error('Error al crear negocio:', error);
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'No se pudo crear el negocio. Intentalo de nuevo.',
+        type: 'error',
+        onConfirm: null,
+      });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -105,7 +188,7 @@ const SelectNegocio = ({ navigation }) => {
         </Text>
         <TouchableOpacity
           style={styles.btnCrear}
-          onPress={() => navigation.navigate('CrearNegocio')}
+          onPress={abrirModalCrear}
         >
           <Icon name="plus-circle" size={20} color="#fff" />
           <Text style={styles.btnCrearText}>Crear mi primer negocio</Text>
@@ -132,6 +215,17 @@ const SelectNegocio = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       />
 
+      {/* Botón flotante para agregar otro negocio */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={abrirModalCrear}
+        disabled={seleccionando}
+        activeOpacity={0.85}
+      >
+        <Icon name="plus" size={26} color="#fff" />
+        <Text style={styles.fabText}>Nuevo negocio</Text>
+      </TouchableOpacity>
+
       {seleccionando && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -147,6 +241,101 @@ const SelectNegocio = ({ navigation }) => {
         onClose={() => setAlertModal({ visible: false, title: '', message: '', type: 'info', onConfirm: null })}
         onConfirm={alertModal.onConfirm}
       />
+
+      {/* Modal para crear un nuevo negocio */}
+      <DraggableModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title="Crear nuevo negocio"
+        initialHeight={0.85}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Registrar negocio</Text>
+          <Text style={styles.modalSubtitle}>
+            Completa el formulario para agregar un negocio y seleccionarlo despues.
+          </Text>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Nombre *</Text>
+            <TextInput
+              style={[styles.input, errors.nombre && styles.inputError]}
+              placeholder="Ej: Pollos La Granja"
+              value={formNegocio.nombre}
+              onChangeText={(text) => handleChange('nombre', text)}
+            />
+            {errors.nombre && <Text style={styles.errorText}>{errors.nombre}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Descripcion</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Opcional"
+              value={formNegocio.descripcion}
+              onChangeText={(text) => handleChange('descripcion', text)}
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Telefono *</Text>
+            <TextInput
+              style={[styles.input, errors.telefono && styles.inputError]}
+              placeholder="Ej: 3001234567"
+              keyboardType="phone-pad"
+              value={formNegocio.telefono}
+              onChangeText={(text) => handleChange('telefono', text)}
+            />
+            {errors.telefono && <Text style={styles.errorText}>{errors.telefono}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Correo *</Text>
+            <TextInput
+              style={[styles.input, errors.correo && styles.inputError]}
+              placeholder="correo@ejemplo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={formNegocio.correo}
+              onChangeText={(text) => handleChange('correo', text)}
+            />
+            {errors.correo && <Text style={styles.errorText}>{errors.correo}</Text>}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Logo (URL) *</Text>
+            <TextInput
+              style={[styles.input, errors.logo && styles.inputError]}
+              placeholder="https://..."
+              autoCapitalize="none"
+              value={formNegocio.logo}
+              onChangeText={(text) => handleChange('logo', text)}
+            />
+            {errors.logo && <Text style={styles.errorText}>{errors.logo}</Text>}
+          </View>
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalCancel]}
+              onPress={() => setModalVisible(false)}
+              disabled={creating}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalPrimary]}
+              onPress={handleCrearNegocio}
+              disabled={creating}
+            >
+              {creating ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.modalPrimaryText}>Guardar</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </DraggableModal>
     </View>
   );
 };
@@ -189,16 +378,23 @@ const styles = StyleSheet.create({
   btnCrear: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0077cc',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    justifyContent: 'center',
+    backgroundColor: '#2563eb',
+    paddingVertical: 15,
+    paddingHorizontal: 26,
+    borderRadius: 14,
     marginTop: 24,
-    gap: 8,
+    gap: 10,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 4,
   },
   btnCrearText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
   },
   header: {
@@ -284,6 +480,97 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     fontWeight: '600',
+  },
+
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 24,
+    backgroundColor: '#0077cc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 28,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  fabText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  modalContent: {
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  formGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: -2,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancel: {
+    backgroundColor: '#f3f4f6',
+  },
+  modalCancelText: {
+    color: '#4b5563',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalPrimary: {
+    backgroundColor: '#0077cc',
+  },
+  modalPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

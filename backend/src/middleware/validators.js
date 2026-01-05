@@ -163,18 +163,12 @@ export const validateCreateProduct = [
   body("negocio_id")
     .notEmpty().withMessage("El ID del negocio es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID del negocio debe ser un número entero positivo"),
+  body("precio")
+    .optional()
+    .isFloat({ min: 0 }).withMessage("El precio debe ser un número positivo"),
   body("cantidad")
-    .notEmpty().withMessage("La cantidad es obligatoria")
-    .isFloat({ min: 0 }).withMessage("La cantidad debe ser un número positivo"),
-  body("costo")
-    .notEmpty().withMessage("El costo es obligatorio")
-    .isFloat({ min: 0 }).withMessage("El costo debe ser un número positivo"),
-  body("fecha_compra")
-    .notEmpty().withMessage("La fecha de compra es obligatoria")
-    .isISO8601().withMessage("La fecha de compra debe ser una fecha válida"),
-  body("fecha_venta")
-    .notEmpty().withMessage("La fecha de venta es obligatoria")
-    .isISO8601().withMessage("La fecha de venta debe ser una fecha válida"),
+    .optional()
+    .isInt({ min: 0 }).withMessage("La cantidad debe ser un entero positivo"),
   handleValidationErrors
 ];
 
@@ -183,26 +177,23 @@ export const validateUpdateProduct = [
     .notEmpty().withMessage("El ID del producto es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID debe ser un número entero positivo"),
   body("nombre")
-    .optional()
+    .notEmpty().withMessage("El nombre es obligatorio")
     .isLength({ min: 2, max: 100 }).withMessage("El nombre debe tener entre 2 y 100 caracteres")
     .trim(),
+  body("negocio_id")
+    .notEmpty().withMessage("El ID del negocio es obligatorio")
+    .isInt({ min: 1 }).withMessage("El ID del negocio debe ser un número entero positivo"),
+  body("precio")
+    .optional()
+    .isFloat({ min: 0 }).withMessage("El precio debe ser un número positivo"),
   body("cantidad")
     .optional()
-    .isFloat({ min: 0 }).withMessage("La cantidad debe ser un número positivo"),
-  body("costo")
-    .optional()
-    .isFloat({ min: 0 }).withMessage("El costo debe ser un número positivo"),
-  body("fecha_compra")
-    .optional()
-    .isISO8601().withMessage("La fecha de compra debe ser una fecha válida"),
-  body("fecha_venta")
-    .optional()
-    .isISO8601().withMessage("La fecha de venta debe ser una fecha válida"),
+    .isInt({ min: 0 }).withMessage("La cantidad debe ser un entero positivo"),
   handleValidationErrors
 ];
 
 export const validateProductId = [
-  param("id_producto")
+  param("id")
     .notEmpty().withMessage("El ID del producto es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID debe ser un número entero positivo"),
   handleValidationErrors
@@ -282,16 +273,19 @@ export const validateCreateLote = [
     .isInt({ min: 1 }).withMessage("El ID del producto debe ser un número entero positivo"),
   body("cantidad_inicial")
     .notEmpty().withMessage("La cantidad inicial es obligatoria")
-    .isFloat({ min: 0 }).withMessage("La cantidad inicial debe ser un número positivo"),
-  body("cantidad_disponible")
+    .isInt({ min: 1 }).withMessage("La cantidad inicial debe ser un número entero mayor a 0"),
+  body("cantidad_actual")
+    .notEmpty().withMessage("La cantidad actual es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad actual debe ser un número entero mayor a 0"),
+  body("precio")
+    .notEmpty().withMessage("El precio es obligatorio")
+    .isFloat({ min: 0.01 }).withMessage("El precio debe ser mayor a 0"),
+  body("fecha")
+    .notEmpty().withMessage("La fecha es obligatoria")
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage("La fecha debe estar en formato YYYY-MM-DD"),
+  body("descripcion")
     .optional()
-    .isFloat({ min: 0 }).withMessage("La cantidad disponible debe ser un número positivo"),
-  body("fecha_entrada")
-    .notEmpty().withMessage("La fecha de entrada es obligatoria")
-    .isISO8601().withMessage("La fecha de entrada debe ser una fecha válida"),
-  body("estado")
-    .optional()
-    .isIn(["activo", "agotado", "cerrado"]).withMessage("El estado debe ser 'activo', 'agotado' o 'cerrado'"),
+    .isString().withMessage("La descripción debe ser una cadena de texto"),
   handleValidationErrors
 ];
 
@@ -300,15 +294,27 @@ export const validateUpdateLote = [
     .notEmpty().withMessage("El ID del lote es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID debe ser un número entero positivo"),
   body("nombre")
-    .optional()
+    .notEmpty().withMessage("El nombre del lote es obligatorio")
     .isLength({ min: 2, max: 100 }).withMessage("El nombre debe tener entre 2 y 100 caracteres")
     .trim(),
-  body("cantidad_disponible")
+  body("producto_id")
+    .notEmpty().withMessage("El ID del producto es obligatorio")
+    .isInt({ min: 1 }).withMessage("El ID del producto debe ser un número entero positivo"),
+  body("cantidad_inicial")
+    .notEmpty().withMessage("La cantidad inicial es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad inicial debe ser un número entero mayor a 0"),
+  body("cantidad_actual")
+    .notEmpty().withMessage("La cantidad actual es obligatoria")
+    .isInt({ min: 1 }).withMessage("La cantidad actual debe ser un número entero mayor a 0"),
+  body("precio")
+    .notEmpty().withMessage("El precio es obligatorio")
+    .isFloat({ min: 0.01 }).withMessage("El precio debe ser mayor a 0"),
+  body("fecha")
+    .notEmpty().withMessage("La fecha es obligatoria")
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage("La fecha debe estar en formato YYYY-MM-DD"),
+  body("descripcion")
     .optional()
-    .isFloat({ min: 0 }).withMessage("La cantidad disponible debe ser un número positivo"),
-  body("estado")
-    .optional()
-    .isIn(["activo", "agotado", "cerrado"]).withMessage("El estado debe ser 'activo', 'agotado' o 'cerrado'"),
+    .isString().withMessage("La descripción debe ser una cadena de texto"),
   handleValidationErrors
 ];
 
@@ -398,10 +404,25 @@ export const validateCreateNegocio = [
   body("usuario_id")
     .notEmpty().withMessage("El ID del usuario es obligatorio")
     .isInt({ min: 1 }).withMessage("El ID del usuario debe ser un número entero positivo"),
+  body("logo")
+    .notEmpty().withMessage("El logo es obligatorio")
+    .isString().withMessage("El logo debe ser una cadena")
+    .isLength({ max: 500 }).withMessage("El logo no puede exceder 500 caracteres"),
+  body("correo")
+    .notEmpty().withMessage("El correo es obligatorio")
+    .isEmail().withMessage("Debe ser un correo electrónico válido")
+    .normalizeEmail(),
+  body("telefono")
+    .notEmpty().withMessage("El teléfono es obligatorio")
+    .isString().withMessage("El teléfono debe ser texto")
+    .matches(/^\d{7,20}$/).withMessage("El teléfono debe tener entre 7 y 20 dígitos"),
   body("descripcion")
     .optional()
     .isLength({ max: 500 }).withMessage("La descripción no puede exceder 500 caracteres"),
-  body("estado")
+  body("fecha")
+    .optional()
+    .isISO8601().withMessage("La fecha debe ser válida"),
+  body("activo")
     .optional()
     .isInt({ min: 0, max: 1 }).withMessage("El estado debe ser 0 o 1"),
   handleValidationErrors
@@ -418,9 +439,24 @@ export const validateUpdateNegocio = [
   body("descripcion")
     .optional()
     .isLength({ max: 500 }).withMessage("La descripción no puede exceder 500 caracteres"),
-  body("estado")
+  body("activo")
     .optional()
     .isInt({ min: 0, max: 1 }).withMessage("El estado debe ser 0 o 1"),
+  body("logo")
+    .optional()
+    .isString().withMessage("El logo debe ser una cadena")
+    .isLength({ max: 500 }).withMessage("El logo no puede exceder 500 caracteres"),
+  body("correo")
+    .optional()
+    .isEmail().withMessage("Debe ser un correo electrónico válido")
+    .normalizeEmail(),
+  body("telefono")
+    .optional()
+    .isString().withMessage("El teléfono debe ser texto")
+    .matches(/^\d{7,20}$/).withMessage("El teléfono debe tener entre 7 y 20 dígitos"),
+  body("fecha")
+    .optional()
+    .isISO8601().withMessage("La fecha debe ser válida"),
   handleValidationErrors
 ];
 

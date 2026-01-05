@@ -55,7 +55,7 @@ const NuevaVenta = ({ visible, onClose, onVentaRegistrada }) => {
 
       const [productosData, clientesData, lotesData] = await Promise.all([
         getProductosByNegocio(negocioActivo.id),
-        getClientById(user.id),
+        getClientById(user.id, negocioActivo.id),
         getLotesByUsuario(user.id),
       ]);
       

@@ -9,7 +9,7 @@ const routeProducts = Router()
 routeProducts.get('/listar', verifyToken, listarProductos)
 routeProducts.post('/registrar', verifyToken, validateCreateProduct, CrearProductos)
 routeProducts.put('/actualizar/:id', verifyToken, validateUpdateProduct, ActualizarProducto)
-routeProducts.delete('/eliminar/:id_producto', verifyToken, validateProductId, EliminarProductos)
+routeProducts.delete('/eliminar/:id', verifyToken, validateProductId, EliminarProductos)
 routeProducts.get("/usuario/:usuario_id", verifyToken, validateUsuarioId, listarProductosPorUsuario);
 routeProducts.get("/negocio/:negocio_id", verifyToken, listarProductosPorNegocio);
 
