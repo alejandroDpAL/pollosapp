@@ -1,10 +1,6 @@
 import api from "./apiConnection";
 
-/**
- * Obtiene la lista de todos los clientes
- * @returns {Promise<Array>} Array de clientes
- * @throws {Error} Si la petición falla
- */
+
 export const getClients = async () => {
   try {
     const response = await api.get("/cliente/listar");
@@ -15,12 +11,7 @@ export const getClients = async () => {
   }
 };
 
-/**
- * Obtiene los clientes asociados a un usuario específico
- * @param {number} clientId - ID del usuario
- * @returns {Promise<Array>} Array de clientes del usuario
- * @throws {Error} Si la petición falla
- */
+
 export const getClientById = async (clientId, negocioId = null) => {
   try {
     if (!clientId) {
@@ -37,12 +28,7 @@ export const getClientById = async (clientId, negocioId = null) => {
 };
 
 
-/**
- * Obtiene las compras realizadas por un cliente específico
- * @param {number} clienteId - ID del cliente
- * @returns {Promise<{message: string, total_gastado: number, cantidad_compras: number, compras: Array}>}
- * @throws {Error} Si la petición falla
- */
+
 export const getComprasByCliente = async (clienteId) => {
   try {
     if (!clienteId || clienteId <= 0) {
@@ -64,10 +50,7 @@ export const getComprasByCliente = async (clienteId) => {
 };
 
 
-/**
- * @deprecated Usar getComprasByCliente en su lugar
- * Obtiene las ventas de un cliente (endpoint alternativo)
- */
+
 export const getVentasByCliente = async (clienteId) => {
   try {
     // Redirigir a la función correcta
@@ -79,18 +62,6 @@ export const getVentasByCliente = async (clienteId) => {
 };
 
 
-/**
- * Crea un nuevo cliente
- * @param {Object} clientData - Datos del cliente
- * @param {string} clientData.nombre - Nombre del cliente (requerido)
- * @param {number} clientData.negocio_id - ID del negocio (requerido)
- * @param {number} clientData.usuario_id - ID del usuario (opcional)
- * @param {string} clientData.telefono - Teléfono del cliente
- * @param {string} clientData.correo - Correo del cliente
- * @param {string} clientData.direccion - Dirección del cliente
- * @returns {Promise<Object>} Respuesta del servidor
- * @throws {Error} Si faltan datos requeridos o la petición falla
- */
 export const createClient = async (clientData) => {
   try {
     // Validar datos requeridos
@@ -114,14 +85,7 @@ export const createClient = async (clientData) => {
   }
 };
 
-/**
- * Actualiza un cliente existente
- * @param {number} id - ID del cliente a actualizar
- * @param {Object} clientData - Datos a actualizar
- * @param {number} clientData.negocio_id - ID del negocio (requerido)
- * @returns {Promise<Object>} Datos del cliente actualizado
- * @throws {Error} Si la petición falla
- */
+
 export const updateClient = async (id, clientData) => {
   try {
     if (!id) {
@@ -140,12 +104,6 @@ export const updateClient = async (id, clientData) => {
   }
 };
 
-/**
- * Elimina un cliente
- * @param {number} id - ID del cliente a eliminar
- * @returns {Promise<Object>} Respuesta del servidor
- * @throws {Error} Si la petición falla
- */
 export const deleteClient = async (id) => {
   try {
     if (!id) {

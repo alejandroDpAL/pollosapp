@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { createClient, updateClient } from '../Api/clientApi';
 
-/**
- * Hook personalizado para gestionar formularios de clientes
- * @param {Object} user - Usuario autenticado
- * @param {Object} negocioActivo - Negocio activo del contexto
- * @param {Function} onSuccess - Callback ejecutado tras éxito
- * @param {Function} onError - Callback ejecutado tras error (opcional)
- */
 export const useClientForm = (user, negocioActivo, onSuccess, onError) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,10 +22,7 @@ export const useClientForm = (user, negocioActivo, onSuccess, onError) => {
     });
   };
 
-  /**
-   * Carga datos de un cliente en el formulario (para edición)
-   * @param {Object} client - Datos del cliente
-   */
+  
   const loadClientData = (client) => {
     if (!client) {
       resetForm();
@@ -49,8 +39,6 @@ export const useClientForm = (user, negocioActivo, onSuccess, onError) => {
 
   /**
    * Actualiza un campo específico del formulario
-   * @param {string} field - Nombre del campo
-   * @param {string} value - Valor del campo
    */
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -58,8 +46,7 @@ export const useClientForm = (user, negocioActivo, onSuccess, onError) => {
 
   /**
    * Valida los datos del formulario
-   * @returns {Object} { isValid: boolean, error: string }
-   */
+¿   */
   const validateForm = () => {
     if (!formData.nombre?.trim()) {
       return {

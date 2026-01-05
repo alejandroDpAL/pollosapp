@@ -31,12 +31,7 @@ export const getEstadisticasNegocio = async (negocioId) => {
   }
 };
 
-/**
- * Obtener datos de ventas por día para gráficos
- * @param {number} negocioId - ID del negocio
- * @param {number} days - Número de días (default: 7)
- * @returns {Promise} Datos de gráfico
- */
+
 export const getVentasPorDia = async (negocioId, days = 7) => {
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');
@@ -66,12 +61,7 @@ export const getVentasPorDia = async (negocioId, days = 7) => {
   }
 };
 
-/**
- * Obtener últimas ventas con detalles
- * @param {number} negocioId - ID del negocio
- * @param {number} limit - Número de ventas a obtener (default: 10)
- * @returns {Promise} Datos de últimas ventas
- */
+
 export const getUltimasVentas = async (negocioId, limit = 10) => {
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');

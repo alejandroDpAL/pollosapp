@@ -13,12 +13,6 @@ if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
     throw new Error(' ERROR: ACCESS_TOKEN_SECRET y REFRESH_TOKEN_SECRET deben estar configurados en .env');
 }
 
-/**
- * Genera un ACCESS TOKEN (corta duración, para APIs)
- * @param {Object} payload - Datos del usuario a incluir en el token
- * @returns {string} Access Token JWT
- */
-
 export const generateAccessToken = (payload) => {
     try {
         const token = jwt.sign(
@@ -40,11 +34,7 @@ export const generateAccessToken = (payload) => {
     }
 };
 
-/**
- * Genera un REFRESH TOKEN (larga duración, solo para renovación)
- * @param {Object} payload - Datos del usuario
- * @returns {string} Refresh token
- */
+
 
 export const generateRefreshToken = (payload) => {
     try {
@@ -66,12 +56,6 @@ export const generateRefreshToken = (payload) => {
     }
 };
 
-/**
- * Verifica un ACCESS TOKEN
- * @param {string} token - Token a verificar
- * @returns {Object} Datos decodificados del token
- * @throws {Error} Si el token es inválido o es un refresh token
- */
 
 export const verifyAccessToken = (token) => {
     try {
@@ -90,12 +74,6 @@ export const verifyAccessToken = (token) => {
     }
 };
 
-/**
- * Verifica un REFRESH TOKEN
- * @param {string} token - Token a verificar
- * @returns {Object} Datos decodificados del token
- * @throws {Error} Si el token es inválido o es un access token
- */
 
 export const verifyRefreshToken = (token) => {
     try {
@@ -116,17 +94,12 @@ export const verifyRefreshToken = (token) => {
 };
 
 
-/**
- * @deprecated Usar generateAccessToken en su lugar
- */
 export const generateToken = (payload) => {
     console.warn(' DEPRECADO: Usa generateAccessToken en lugar de generateToken');
     return generateAccessToken(payload);
 };
 
-/**
- * @deprecated Usar verifyAccessToken en su lugar
- */
+
 export const verifyToken = (token) => {
     console.warn(' DEPRECADO: Usa verifyAccessToken en lugar de verifyToken');
     return verifyAccessToken(token);
